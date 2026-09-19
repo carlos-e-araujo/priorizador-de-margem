@@ -42,6 +42,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
             func.count(Venda.order_id).label("total_pedidos"),
             func.sum(Venda.receita_liquida).label("receita_liquida"),
             func.sum(Venda.margem_contribuicao).label("margem_contribuicao"),
+            func.sum(Venda.custo_frete).label("frete_total_global"),
             func.sum(case((Venda.mc_negativa == True, 1), else_=0)).label("qtd_mc_negativa"),
             func.sum(case((Venda.mc_negativa == True, func.abs(Venda.margem_contribuicao)), else_=0.0)).label("prejuizo_mc_negativa"),
             func.sum(case((Venda.mc_negativa == True, Venda.custo_frete), else_=0.0)).label("frete_pedidos_deficitarios"),
@@ -55,7 +56,10 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
         total_pedidos = int(res_v.total_pedidos or 0)
         receita_liquida = float(res_v.receita_liquida or 0.0)
         margem_contribuicao = float(res_v.margem_contribuicao or 0.0)
+        frete_total_global = float(res_v.frete_total_global or 0.0)
         mc_pct = (margem_contribuicao / receita_liquida * 100.0) if receita_liquida > 0 else 0.0
+        ticket_medio = (receita_liquida / total_pedidos) if total_pedidos > 0 else 0.0
+        mc_pre_frete_pct = ((margem_contribuicao + frete_total_global) / receita_liquida * 100.0) if receita_liquida > 0 else 0.0
 
         qtd_mc_negativa = int(res_v.qtd_mc_negativa or 0)
         prejuizo_mc = float(res_v.prejuizo_mc_negativa or 0.0)
@@ -163,7 +167,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
         top_cat_rup_nome = row_cat_rup[0] if row_cat_rup else "Geral"
 
         # Período contábil apurado
-        period_str = "Exercício 2023 - 2024"
+        period_str = f"Base Histórica ({format_integer_br(total_pedidos)} pedidos)"
         if res_v.min_data and res_v.max_data:
             period_str = f"{res_v.min_data[:7]} a {res_v.max_data[:7]}"
 
@@ -178,7 +182,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
                 formatted_value=format_currency_brl(receita_liquida),
                 unit="BRL",
                 status="normal",
-                trend="+14.2% vs a.a.",
+                trend=f"Ticket médio de {format_currency_brl(ticket_medio)}",
                 subtitle=f"{format_integer_br(total_pedidos)} pedidos faturados no período",
             ),
             # Card 2: Margem Consolidada (Macro Financeiro)
@@ -190,7 +194,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
                 formatted_value=format_percent_br(mc_pct),
                 unit="PCT",
                 status="normal" if mc_pct >= 50 else ("warning" if mc_pct >= 40 else "critical"),
-                trend="+3.1 p.p. vs benchmark",
+                trend=f"{format_percent_br(mc_pre_frete_pct)} MC antes do frete",
                 subtitle=f"{format_currency_brl(margem_contribuicao)} de margem após CPV e frete",
             ),
             # Card 3: Maior Dreno Comercial (Dinâmico por Canal/Pedidos Deficitários)

@@ -88,6 +88,12 @@ export const PrioritizationTable: React.FC = () => {
     return list.filter((item) => item.horizon_days === selectedHorizon);
   }, [runData, selectedHorizon]);
 
+  // Score máximo do ciclo para proporcionalidade visual da barra
+  const maxScore = useMemo(() => {
+    const scores = runData?.initiatives?.map((i) => i.priority_score) || [1];
+    return Math.max(...scores, 1);
+  }, [runData]);
+
   // Colunas da TanStack Table
   const columns = useMemo(
     () => [
@@ -104,8 +110,7 @@ export const PrioritizationTable: React.FC = () => {
         ),
         cell: (info) => {
           const score = info.getValue();
-          const maxScore = 150; // valor de referência para a barra
-          const pct = Math.min(100, Math.round((score / maxScore) * 100));
+          const pct = Math.max(5, Math.min(100, Math.round((score / maxScore) * 100)));
 
           return (
             <div className="flex flex-col gap-1 w-28">
@@ -262,7 +267,7 @@ export const PrioritizationTable: React.FC = () => {
         },
       }),
     ],
-    [approvingId, approveMutation]
+    [approvingId, approveMutation, maxScore]
   );
 
   const table = useReactTable({

@@ -34,7 +34,7 @@ def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
         )
         row_motivo = session.execute(stmt_top_motivo).first()
         top_motivo_nome = row_motivo[0] if row_motivo else "Devoluções Gerais"
-        baseline_devolucoes = float(row_motivo[1] or 0.0) if row_motivo else 50000.0
+        baseline_devolucoes = float(row_motivo[1] or 0.0) if row_motivo else 0.0
 
         # Custo total de frete reverso global
         stmt_dev_total = select(func.sum(Venda.custo_frete)).where(Venda.devolvido == True)
@@ -76,7 +76,7 @@ def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
         )
         row_atend = session.execute(stmt_top_atend).first()
         top_atend_cat = row_atend[0] if row_atend else "Suporte ao Cliente"
-        baseline_atend = float(row_atend[1] or 0.0) if row_atend else 100000.0
+        baseline_atend = float(row_atend[1] or 0.0) if row_atend else 0.0
 
         # 4. Alavanca Estoque: Margem em risco na categoria mais vulnerável
         stmt_top_cat_rup = (
@@ -91,7 +91,7 @@ def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
         )
         row_rup = session.execute(stmt_top_cat_rup).first()
         top_rup_cat = row_rup[0] if row_rup else "Curva A"
-        spread_top_rup = float(row_rup[1] or 0.0) if row_rup else 1000000.0
+        spread_top_rup = float(row_rup[1] or 0.0) if row_rup else 0.0
         baseline_ruptura = round(spread_top_rup * 0.10, 2)  # 10% do spread recuperável
 
         # 5. Alavanca Marketing: Queima de caixa em campanhas com ROAS < 1.0
@@ -167,7 +167,9 @@ def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
 
 
 def calculate_simulation(
-    adjustments: dict[str, float], db: Optional[Session] = None
+    adjustments: dict[str, float],
+    setup_cost_brl: Optional[float] = None,
+    db: Optional[Session] = None,
 ) -> SimulatorRunResponse:
     """Calcula deterministicamente o Delta EBITDA anual e o Payback com base nas alavancas descobertas."""
     config = get_active_levers(db=db)
@@ -186,9 +188,10 @@ def calculate_simulation(
 
     delta_ebitda_total = round(delta_ebitda_total, 2)
 
+    effective_setup_cost = setup_cost_brl if setup_cost_brl is not None and setup_cost_brl > 0 else INVESTMENT_SETUP_BRL
     monthly_gain = delta_ebitda_total / 12.0
     if monthly_gain > 0:
-        payback_months = round(INVESTMENT_SETUP_BRL / monthly_gain, 1)
+        payback_months = round(effective_setup_cost / monthly_gain, 1)
     else:
         payback_months = 99.9
 
@@ -202,7 +205,10 @@ def calculate_simulation(
                 "id": lever.id,
                 "title": lever.title,
                 "pilar": lever.pilar,
+                "baseline_cost_brl": lever.baseline_cost_brl,
+                "formatted_baseline": format_currency_brl(lever.baseline_cost_brl),
                 "applied_pct": adjustments.get(lever.id, lever.current_value_pct),
+                "applied_pct_display": f"{round(adjustments.get(lever.id, lever.current_value_pct) * 100)}%",
                 "gain_brl": impact_by_lever.get(lever.id, 0.0),
                 "formatted_gain": format_currency_brl(impact_by_lever.get(lever.id, 0.0)),
             }

@@ -33,4 +33,8 @@ def simulate_endpoint(
 
     aplicando os percentuais de ajuste dos sliders sobre a volumetria real do banco SQLite.
     """
-    return calculate_simulation(adjustments=payload.adjustments, db=db)
+    return calculate_simulation(
+        adjustments=payload.adjustments,
+        setup_cost_brl=payload.setup_cost_brl,
+        db=db,
+    )

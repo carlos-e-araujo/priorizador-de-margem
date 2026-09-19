@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -25,6 +26,7 @@ class SimulatorRunRequest(BaseModel):
     """Payload para recálculo dinâmico de sensibilidade dos sliders."""
 
     adjustments: dict[str, float] = Field(..., description="Dicionário dinâmico { lever_id: target_pct }")
+    setup_cost_brl: Optional[float] = Field(None, description="Custo opcional de setup operacional para payback")
 
 
 class SimulatorRunResponse(BaseModel):

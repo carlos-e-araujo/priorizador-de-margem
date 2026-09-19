@@ -159,7 +159,7 @@ def query_top_support_issues() -> str:
 
 @tool
 def query_wismo_tickets_summary() -> str:
-    """Compatibilidade: analisa chamados de atendimento com foco no maior problema identificado e métricas de rastreamento."""
+    """Compatibilidade retroativa: descobre dinamicamente os maiores gargalos de atendimento da empresa e delega para query_top_support_issues."""
     return query_top_support_issues.invoke({})
 
 
