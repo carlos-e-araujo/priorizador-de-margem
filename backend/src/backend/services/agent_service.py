@@ -34,6 +34,7 @@ REGRAS:
 - Use SEMPRE as tools disponíveis para extrair fatos observados. Não invente números.
 - Identifique o canal e os fatores de maior vazamento de margem.
 - Formule oportunidades distinguindo: Fato Observado, Causa e Recomendação.
+- Responda exclusivamente com parecer técnico analítico, sem saudações coloquiais, sem diálogos com o usuário e sem perguntas ao final.
 """
 
 SYSTEM_OPERATIONS = """Você é o Especialista de Operações e Logística da Vértice Retail.
@@ -42,6 +43,7 @@ REGRAS:
 - Baseie suas afirmações estritamente nas métricas das tools.
 - Diferencie problemas causados pelo motivo campeão de devolução dos riscos de suprimentos em estoque.
 - Proponha ações práticas com horizonte de implementação estimado (30, 60 ou 90 dias).
+- Responda exclusivamente com parecer técnico analítico, sem saudações coloquiais, sem diálogos com o usuário e sem perguntas ao final.
 """
 
 SYSTEM_CX = """Você é o Especialista de Customer Experience e Pós-Venda da Vértice Retail.
@@ -50,21 +52,23 @@ REGRAS:
 - Descubra qual é a MAIOR queixa dos clientes nas tools (seja produto defeituoso/quebrado, atraso na entrega, dúvidas técnicas ou outro problema real).
 - Cite os textos reais dos clientes e o custo acumulado desse gargalo de suporte.
 - Proponha melhorias operacionais, preventivas e de automação para sanar a causa-raiz identificada.
+- Responda exclusivamente com parecer técnico analítico, sem saudações coloquiais, sem diálogos com o usuário e sem perguntas ao final.
 """
 
 SYSTEM_CONSOLIDATOR = """Você é o Consolidador Executivo do Módulo C da Vértice Retail.
-Receba os relatórios dos especialistas e estruture 4 iniciativas prioritárias orientadas à recuperação de margem e contenção dos gargalos descobertos.
-IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido, sem texto livre antes ou depois:
+Analise criticamente os dados brutos e os pareceres dos especialistas.
+Sua missão é gerar de 4 a 6 iniciativas estratégicas genuínas, criativas e fundamentadas nos dados observados.
+IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido, sem nenhum texto livre antes ou depois:
 ```json
 {
-    "summary": "Resumo executivo...",
+    "summary": "Resumo executivo em 2 a 3 frases...",
     "initiatives": [
         {
-            "title": "Título da ação",
-            "pilar": "CX",
-            "fact_observed": "Fato comprovado nos relatórios...",
-            "hypothesis": "Interpretação da causa...",
-            "recommendation": "Ação prática...",
+            "title": "Nome objetivo e criativo da ação condizente com a causa-raiz",
+            "pilar": "CX | Comercial | Operações | Estoque",
+            "fact_observed": "Fato comprovado nos dados e ferramentas...",
+            "hypothesis": "Diagnóstico aprofundado da causa-raiz...",
+            "recommendation": "Plano de intervenção tático detalhado...",
             "estimated_impact_brl": 50000.0,
             "effort_level": 1,
             "risk_level": 1,
@@ -134,7 +138,7 @@ def calculate_priority_score(
 
 
 def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
-    """Gera iniciativas dinâmicas a partir das consultas reais ao banco SQLite, sem textos ou títulos fixos."""
+    """Gera iniciativas determinísticas fundamentadas nos dados reais do SQLite, adaptando títulos e planos às anomalias encontradas."""
     try:
         neg_margin = json.loads(query_negative_margin_summary.invoke({}))
     except Exception:
@@ -155,93 +159,139 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
     except Exception:
         stockout_data = {}
 
-    # 1. Dados de Atendimento / CX (Descoberta da Maior Queixa)
+    initiatives: List[Dict[str, Any]] = []
+
+    # 1. Análise Dinâmica de Atendimento e CX
     top_issue = support_data.get("top_problema_principal") or {}
-    cat_atend = top_issue.get("categoria", "Atendimento ao Cliente")
+    cat_atend = top_issue.get("categoria", "Atendimento")
     custo_atend = float(top_issue.get("custo_total_brl", 0.0))
     qtd_atend = int(top_issue.get("total_tickets", 0))
     csat_atend = float(top_issue.get("csat_medio", 3.0))
     amostras = top_issue.get("amostras_texto", [])
-    amostra_txt = amostras[0] if amostras else f"Queixas recorrentes relacionadas a {cat_atend}."
+    amostra_txt = amostras[0] if amostras else f"Queixas recorrentes em {cat_atend}."
+    cat_lower = cat_atend.lower()
 
     impacto_cx = round(custo_atend * 0.60, 2)
+    if any(term in cat_lower for term in ["defeito", "quebrado", "avari", "estragad"]):
+        title_cx = f"Plano de Blindagem de Qualidade e Integridade de Produto: {cat_atend}"
+        hypo_cx = f"Severo índice de avarias ({qtd_atend:,} tickets, CSAT {csat_atend:.1f}) decorre de fragilidade na cadeia de embalagem e transporte desprotegido."
+        recom_cx = f"Padronizar revestimento de proteção reforçado em fulfillment, realizar blitz técnica nos fornecedores e criar canal prioritário para trocas de {cat_atend}."
+        effort_cx, risk_cx, horiz_cx = 1, 1, 30
+    elif any(term in cat_lower for term in ["atraso", "onde", "rastreio", "entrega"]):
+        title_cx = f"Automação de Rastreamento Proativo e Notificação Logística ({cat_atend})"
+        hypo_cx = f"A opacidade de marcos de entrega em transportadoras parceiras obriga o cliente a abrir chamados ({qtd_atend:,} ocorrências, custo R$ {custo_atend:,.2f})."
+        recom_cx = "Implantar mensageria transacional ativa (WhatsApp/SMS) a cada mudança de custódia e alerta prévio de atrasos ao comprador."
+        effort_cx, risk_cx, horiz_cx = 1, 1, 30
+    else:
+        title_cx = f"Reestruturação de Atendimento e SLA de Pós-Venda ({cat_atend})"
+        hypo_cx = f"Gargalos operacionais geraram custo acumulado de R$ {custo_atend:,.2f} com satisfação deprimida (CSAT {csat_atend:.1f})."
+        recom_cx = f"Capacitar squad dedicada de suporte para o gargalo '{cat_atend}' e implementar triagem inteligente com resolução no primeiro contato (FCR)."
+        effort_cx, risk_cx, horiz_cx = 2, 1, 30
 
-    # 2. Dados de Devoluções / Operações (Descoberta do Maior Motivo)
-    top_motivo_obj = returns_data.get("top_motivo") or {}
-    motivo_dev = top_motivo_obj.get("motivo", "Devoluções Gerais")
-    frete_dev_motivo = float(top_motivo_obj.get("frete_perdido_brl", 0.0))
-    qtd_dev_motivo = int(top_motivo_obj.get("qtd_devolucoes", 0))
+    initiatives.append({
+        "title": title_cx,
+        "pilar": "CX",
+        "fact_observed": f"Registrados {qtd_atend:,} chamados na queixa '{cat_atend}', gerando impacto de R$ {custo_atend:,.2f} em atendimento (CSAT médio: {csat_atend:.1f}). Amostra real: \"{amostra_txt}\".".replace(",", "."),
+        "hypothesis": hypo_cx,
+        "recommendation": recom_cx,
+        "estimated_impact_brl": impacto_cx,
+        "effort_level": effort_cx,
+        "risk_level": risk_cx,
+        "horizon_days": horiz_cx,
+        "requires_human_approval": False,
+    })
 
-    categorias_dev = returns_data.get("categorias", [])
-    total_reverse_freight = sum(c.get("custo_frete_perdido_brl", 0) for c in categorias_dev) or frete_dev_motivo
-    impacto_operacoes = round(max(frete_dev_motivo * 0.60, total_reverse_freight * 0.40), 2)
-
-    # 3. Dados Comerciais (Descoberta do Maior Canal Deficitário)
+    # 2. Análise Dinâmica de Margem Comercial e Canais Deficitários
     pedidos_neg = neg_margin.get("pedidos_negativos", 0)
     prejuizo_neg = float(neg_margin.get("prejuizo_acumulado_brl", 0.0))
     frete_neg = float(neg_margin.get("custo_frete_pedidos_negativos", 0.0))
     impacto_comercial = round(prejuizo_neg + frete_neg, 2)
 
     top_canais = neg_margin.get("top_canais_deficitarios") or []
-    top_canal_nome = top_canais[0].get("canal", "Checkout Geral") if top_canais else "Checkout"
+    top_canal_nome = top_canais[0].get("canal", "Canais Gerais") if top_canais else "Checkout Geral"
     prejuizo_canal = float(top_canais[0].get("prejuizo_brl", 0.0)) if top_canais else prejuizo_neg
+    frete_canal = float(top_canais[0].get("frete_brl", 0.0)) if top_canais else frete_neg
 
-    # 4. Dados de Estoque (Descoberta da Categoria com Maior Ruptura)
+    if frete_canal > prejuizo_canal:
+        title_com = f"Política de Frete Sustentável e Corte de Breakeven ({top_canal_nome})"
+        hypo_com = f"No canal {top_canal_nome}, o custo de frete (R$ {frete_canal:,.2f}) superou a própria margem dos pedidos, transformando vendas em dreno de caixa."
+        recom_com = f"Definir ticket mínimo de corte para elegibilidade a frete grátis no canal {top_canal_nome} e renegociar tabelas por faixa de CEP."
+    else:
+        title_com = f"Trava Algorítmica de Margem de Contribuição Mínima ({top_canal_nome})"
+        hypo_com = f"Combinação descontrolada de descontos e taxas de comissão no canal {top_canal_nome} gerou R$ {prejuizo_canal:,.2f} em margem negativa direta."
+        recom_com = f"Implantar validação em tempo real no checkout bloqueando transações com margem de contribuição unitária negativa no canal {top_canal_nome}."
+
+    initiatives.append({
+        "title": title_com,
+        "pilar": "Comercial",
+        "fact_observed": f"Detectados {pedidos_neg:,} pedidos deficitários com R$ {prejuizo_neg:,.2f} de prejuízo e R$ {frete_neg:,.2f} em frete não absorvido. Canal mais crítico: {top_canal_nome} (prejuízo R$ {prejuizo_canal:,.2f}, frete R$ {frete_canal:,.2f}).".replace(",", "."),
+        "hypothesis": hypo_com,
+        "recommendation": recom_com,
+        "estimated_impact_brl": impacto_comercial,
+        "effort_level": 1,
+        "risk_level": 2,
+        "horizon_days": 30,
+        "requires_human_approval": True,
+    })
+
+    # 3. Análise Dinâmica de Devoluções e Frete Reverso
+    top_motivo_obj = returns_data.get("top_motivo") or {}
+    motivo_dev = top_motivo_obj.get("motivo", "Devoluções Gerais")
+    frete_dev_motivo = float(top_motivo_obj.get("frete_perdido_brl", 0.0))
+    qtd_dev_motivo = int(top_motivo_obj.get("qtd_devolucoes", 0))
+    motivo_lower = motivo_dev.lower()
+
+    categorias_dev = returns_data.get("categorias", [])
+    total_reverse_freight = sum(c.get("custo_frete_perdido_brl", 0) for c in categorias_dev) or frete_dev_motivo
+    impacto_operacoes = round(max(frete_dev_motivo * 0.60, total_reverse_freight * 0.40), 2)
+
+    if any(t in motivo_lower for t in ["tamanho", "medida", "pequeno", "grande"]):
+        title_ops = f"Padronização de Grade Dimensional e Provador Virtual ({motivo_dev})"
+        hypo_ops = f"Variação de modelagem entre diferentes fornecedores induz o consumidor ao erro, gerando {qtd_dev_motivo:,} devoluções por divergência de medidas."
+        recom_ops = "Calibrar guias de medidas nas páginas dos produtos de moda e integrar tecnologia preditiva de recomendação de tamanho."
+        effort_ops, risk_ops, horiz_ops = 2, 1, 60
+    elif any(t in motivo_lower for t in ["defeito", "quebrado", "avari"]):
+        title_ops = f"Auditoria de Qualidade em Fornecedores e Seguro de Trânsito ({motivo_dev})"
+        hypo_ops = f"Fragilidades de fabricação e impacto no manuseio logístico geraram R$ {frete_dev_motivo:,.2f} de frete reverso perdido por itens avariados."
+        recom_ops = "Acionar SLA contratual de estorno de frete contra fornecedores reincidentes e revisar transportadoras com alto índice de avaria."
+        effort_ops, risk_ops, horiz_ops = 2, 2, 60
+    else:
+        title_ops = f"Otimização de Logística Reversa e Redução de Frete Perdido ({motivo_dev})"
+        hypo_ops = f"Devoluções por '{motivo_dev}' acumulam {qtd_dev_motivo:,} ocorrências e R$ {frete_dev_motivo:,.2f} em custos reversos absorvidos pela empresa."
+        recom_ops = "Implantar pré-triagem fotográfica para devoluções e pontos de consolidação regional para diminuir o frete reverso."
+        effort_ops, risk_ops, horiz_ops = 2, 2, 60
+
+    initiatives.append({
+        "title": title_ops,
+        "pilar": "Operações",
+        "fact_observed": f"O motivo '{motivo_dev}' lidera as devoluções com {qtd_dev_motivo:,} ocorrências, totalizando R$ {total_reverse_freight:,.2f} em custos de frete reverso perdidos na operação.".replace(",", "."),
+        "hypothesis": hypo_ops,
+        "recommendation": recom_ops,
+        "estimated_impact_brl": impacto_operacoes,
+        "effort_level": effort_ops,
+        "risk_level": risk_ops,
+        "horizon_days": horiz_ops,
+        "requires_human_approval": False,
+    })
+
+    # 4. Análise Dinâmica de Risco de Ruptura e Estoque
     top_cat_rup_obj = stockout_data.get("top_categoria_ruptura") or {}
     top_cat_rup = top_cat_rup_obj.get("categoria", "Curva A")
     spread_rup = float(top_cat_rup_obj.get("spread_em_risco_brl", 50000.0))
     impacto_estoque = round(min(spread_rup * 0.15, 65000.0), 2)
 
-    initiatives = [
-        {
-            "title": f"Força-Tarefa de Qualidade e Pós-Venda: {cat_atend}",
-            "pilar": "CX",
-            "fact_observed": f"Identificados {qtd_atend:,} chamados na categoria '{cat_atend}' gerando custo operacional de R$ {custo_atend:,.2f} (CSAT médio: {csat_atend:.1f}). Exemplo de queixa: \"{amostra_txt}\".".replace(",", "."),
-            "hypothesis": f"Avarias no transporte, falhas de conferência pré-envio ou defeitos de fabricação concentram o maior volume de insatisfação dos clientes em {cat_atend}.",
-            "recommendation": f"Implantar inspeção reforçada de embalagem, auditoria de lotes de fornecedores e canal expresso de suporte para resolução imediata de {cat_atend}.",
-            "estimated_impact_brl": impacto_cx,
-            "effort_level": 1,
-            "risk_level": 1,
-            "horizon_days": 30,
-            "requires_human_approval": False,
-        },
-        {
-            "title": f"Guardrails no Checkout: Erradicação de Margem Negativa ({top_canal_nome})",
-            "pilar": "Comercial",
-            "fact_observed": f"Mapeados {pedidos_neg:,} pedidos deficitários somando R$ {prejuizo_neg:,.2f} em prejuízo direto e R$ {frete_neg:,.2f} em frete não coberto, com maior concentração no canal {top_canal_nome} (R$ {prejuizo_canal:,.2f}).".replace(",", "."),
-            "hypothesis": f"Ausência de travas de margem mínima e concessão agressiva de frete grátis sem valor de corte no canal {top_canal_nome}.",
-            "recommendation": "Implantar trava algorítmica no checkout exigindo margem de contribuição mínima positiva e limitando cupons de frete grátis a carrinhos acima do breakeven.",
-            "estimated_impact_brl": impacto_comercial,
-            "effort_level": 1,
-            "risk_level": 2,
-            "horizon_days": 30,
-            "requires_human_approval": True,
-        },
-        {
-            "title": f"Contenção de Devoluções e Frete Reverso: {motivo_dev}",
-            "pilar": "Operações",
-            "fact_observed": f"O motivo '{motivo_dev}' lidera as devoluções com {qtd_dev_motivo:,} ocorrências e impacto acumulado de frete reverso, somando R$ {total_reverse_freight:,.2f} em custos logísticos perdidos.".replace(",", "."),
-            "hypothesis": f"Falhas nas especificações técnicas, avarias no trânsito ou desvios de conferência geram devoluções frequentes por {motivo_dev}.",
-            "recommendation": f"Revisar transportadoras parceiras, padronizar proteção antichoque e implantar política de pós-venda ativa para reduzir o frete reverso de {motivo_dev} em 50%.",
-            "estimated_impact_brl": impacto_operacoes,
-            "effort_level": 2,
-            "risk_level": 2,
-            "horizon_days": 60,
-            "requires_human_approval": False,
-        },
-        {
-            "title": f"Mitigação de Ruptura e Reposição Dinâmica ({top_cat_rup})",
-            "pilar": "Estoque",
-            "fact_observed": f"A categoria {top_cat_rup} concentra o maior risco de desabastecimento, com R$ {spread_rup:,.2f} em spread potencial de vendas ameaçado por lead times estendidos.",
-            "hypothesis": "Parâmetros estáticos de ponto de pedido e lead times descentralizados desconsideram a velocidade de giro dos SKUs Curva A.",
-            "recommendation": f"Implantar S&OP integrado recalculando estoques de segurança semanais e acionar acordos de fornecimento prioritário para a categoria {top_cat_rup}.",
-            "estimated_impact_brl": impacto_estoque,
-            "effort_level": 3,
-            "risk_level": 2,
-            "horizon_days": 90,
-            "requires_human_approval": True,
-        },
-    ]
+    initiatives.append({
+        "title": f"S&OP Integrado e Reposição Dinâmica de Estoque ({top_cat_rup})",
+        "pilar": "Estoque",
+        "fact_observed": f"A categoria '{top_cat_rup}' concentra o maior risco de desabastecimento, com R$ {spread_rup:,.2f} em spread de vendas sob ameaça por lead times estendidos.",
+        "hypothesis": f"Disparidades de lead time de fornecedores na categoria '{top_cat_rup}' e estoques de segurança estáticos colocam em risco os itens de maior giro.",
+        "recommendation": f"Parametrizar ponto de pedido dinâmico baseado em giro semanal e firmar contratos de suprimento com SLA prioritário para {top_cat_rup}.",
+        "estimated_impact_brl": impacto_estoque,
+        "effort_level": 3,
+        "risk_level": 2,
+        "horizon_days": 90,
+        "requires_human_approval": True,
+    })
 
     for init in initiatives:
         init["priority_score"] = calculate_priority_score(
@@ -292,7 +342,7 @@ def commercial_specialist_node(state: AgentState) -> Dict[str, Any]:
                 SystemMessage(content=SYSTEM_COMMERCIAL),
                 HumanMessage(
                     content=f"Dados da ferramenta query_negative_margin_summary:\n{tool_raw}\n\n"
-                    "Apresente seu parecer estruturando Fato Observado, Causa e Recomendação."
+                    "Apresente seu parecer exclusivamente como relatório técnico estruturado em: Fatos Quantitativos, Diagnóstico da Causa-Raiz e Recomendações. Não inclua saudações, diálogos informais ou perguntas ao usuário."
                 ),
             ]
         )
@@ -319,7 +369,7 @@ def operations_specialist_node(state: AgentState) -> Dict[str, Any]:
                 SystemMessage(content=SYSTEM_OPERATIONS),
                 HumanMessage(
                     content=f"Dados de devoluções:\n{returns_raw}\n\nDados de estoque:\n{stockout_raw}\n\n"
-                    "Apresente seu parecer estruturando Fato Observado, Causa e Recomendações (30, 60 ou 90 dias)."
+                    "Apresente seu parecer exclusivamente como relatório técnico estruturado em: Fatos Quantitativos, Diagnóstico da Causa-Raiz e Recomendações (30, 60 ou 90 dias). Não inclua saudações, diálogos informais ou perguntas ao usuário."
                 ),
             ]
         )
@@ -344,7 +394,7 @@ def cx_specialist_node(state: AgentState) -> Dict[str, Any]:
                 SystemMessage(content=SYSTEM_CX),
                 HumanMessage(
                     content=f"Dados das maiores queixas de suporte:\n{support_raw}\n\n"
-                    "Apresente seu parecer estruturando Fato Observado, Causa e Recomendação de contenção operacional."
+                    "Apresente seu parecer exclusivamente como relatório técnico estruturado em: Fatos Quantitativos, Diagnóstico da Causa-Raiz e Recomendações de contenção operacional. Não inclua saudações, diálogos informais ou perguntas ao usuário."
                 ),
             ]
         )
@@ -362,21 +412,95 @@ def cx_specialist_node(state: AgentState) -> Dict[str, Any]:
 
 
 def consolidator_node(state: AgentState) -> Dict[str, Any]:
-    """Consolidador une os relatórios dos especialistas, gera iniciativas e aplica o Score determinístico."""
+    """Consolidador une os relatórios dos especialistas e dados reais, gerando iniciativas criativas com o LLM."""
     revision_inst = state.get("revision_instructions", "")
-    prompt_content = (
-        f"Relatório Comercial:\n{state.get('commercial_report')}\n\n"
-        f"Relatório de Operações:\n{state.get('operations_report')}\n\n"
-        f"Relatório de CX:\n{state.get('cx_report')}\n\n"
-    )
+
+    # Extrai dados analíticos brutos em tempo real para ancorar a IA
+    try:
+        raw_com = query_negative_margin_summary.invoke({})
+    except Exception:
+        raw_com = "{}"
+    try:
+        raw_ops = query_returns_by_category.invoke({})
+    except Exception:
+        raw_ops = "{}"
+    try:
+        raw_cx = query_top_support_issues.invoke({})
+    except Exception:
+        raw_cx = "{}"
+    try:
+        raw_est = query_stockout_risks.invoke({})
+    except Exception:
+        raw_est = "{}"
+
+    prompt_content = f"""Você é o Agente Consolidador C-Level do Sistema Vértice Retail.
+Analise com profundidade analítica os dados transacionais em tempo real e os pareceres dos especialistas:
+
+### DADOS BRUTOS EXTRAÍDOS DO BANCO DE DADOS:
+1. ATENDIMENTO E CX:
+{raw_cx}
+
+2. VENDAS E MARGEM COMERCIAL:
+{raw_com}
+
+3. OPERAÇÕES E DEVOLUÇÕES:
+{raw_ops}
+
+4. ESTOQUE E RUPTURA:
+{raw_est}
+
+### RELATÓRIOS TÉCNICOS DOS ESPECIALISTAS:
+- Parecer Comercial:
+{state.get('commercial_report', '')}
+
+- Parecer de Operações:
+{state.get('operations_report', '')}
+
+- Parecer de CX:
+{state.get('cx_report', '')}
+"""
     if revision_inst:
-        prompt_content += f"ATENÇÃO - INSTRUÇÕES DE REVISÃO DO CFO:\n{revision_inst}\n\n"
+        prompt_content += f"\n### DIRETRIZES DE REVISÃO DO CFO:\n{revision_inst}\n"
+
+    prompt_content += """
+### DIRETRIZES DE INTELIGÊNCIA:
+- Analise os dados reais do banco de dados. NÃO use títulos fixos, frases prontas ou templates predefinidos.
+- Crie de 4 a 6 iniciativas estratégicas genuínas, criativas e customizadas especificamente para o cenário revelado nos dados.
+- O título deve ser objetivo, específico e refletir a ação concreta (ex: "Blindagem de Last-Mile...", "Otimização de ROAS e Trava de Frete...", etc.).
+- A hipótese deve diagnosticar a causa-raiz econômico-operacional do problema observado.
+- A recomendação deve ser um plano tático claro, com ações mensuráveis.
+- O estimated_impact_brl deve ser coerente com a volumetria financeira real do problema.
+- effort_level (1=Baixo, 2=Médio, 3=Alto)
+- risk_level (1=Baixo, 2=Médio, 3=Alto)
+- horizon_days (30, 60 ou 90)
+- requires_human_approval (true se mexer em preços, compras vultosas ou contratos, false para processos operacionais internos).
+
+IMPORTANTE: Responda EXCLUSIVAMENTE com um JSON válido (sem texto introdutório, sem perguntas ao usuário, sem saudações).
+Estrutura:
+{
+  "summary": "Resumo executivo do diagnóstico em 2 a 3 frases",
+  "initiatives": [
+    {
+      "title": "...",
+      "pilar": "CX | Comercial | Operações | Estoque",
+      "fact_observed": "...",
+      "hypothesis": "...",
+      "recommendation": "...",
+      "estimated_impact_brl": 0.0,
+      "effort_level": 1,
+      "risk_level": 1,
+      "horizon_days": 30,
+      "requires_human_approval": false
+    }
+  ]
+}
+"""
 
     parsed_initiatives = []
     summary_text = "Consolidação executiva de iniciativas para recuperação de margem e contenção de gargalos."
 
     try:
-        llm = get_llm(temperature=0.1)
+        llm = get_llm(temperature=0.2)
         res = llm.invoke(
             [
                 SystemMessage(content=SYSTEM_CONSOLIDATOR),
@@ -391,13 +515,35 @@ def consolidator_node(state: AgentState) -> Dict[str, Any]:
             if parsed_initiatives:
                 summary_text = parsed.get("summary", summary_text)
     except Exception as exc:
-        logger.warning(f"Consolidator LLM indisponível ou parse vazio, ativando gerador dinâmico: {exc}")
+        logger.warning(f"Consolidator LLM falhou na 1ª tentativa: {exc}")
 
+    # Tentativa de recuperação focada caso o formato tenha vindo corrompido
     if not parsed_initiatives:
+        try:
+            llm_retry = get_llm(temperature=0.0)
+            res_retry = llm_retry.invoke(
+                [
+                    SystemMessage(content="Gere EXCLUSIVAMENTE um objeto JSON válido contendo a lista 'initiatives' com o plano de ação."),
+                    HumanMessage(content=prompt_content + "\nRESPONDA EXCLUSIVAMENTE COM JSON: {\"summary\": \"...\", \"initiatives\": [...]}"),
+                ]
+            )
+            parsed = parse_json_from_response(res_retry.content)
+            if isinstance(parsed, dict) and "initiatives" in parsed and isinstance(parsed["initiatives"], list):
+                parsed_initiatives = [
+                    i for i in parsed["initiatives"] if isinstance(i, dict) and "title" in i
+                ]
+                if parsed_initiatives:
+                    summary_text = parsed.get("summary", summary_text)
+        except Exception as retry_exc:
+            logger.warning(f"Retry consolidator falhou: {retry_exc}")
+
+    # Fallback determinístico caso as chamadas de rede à IA externa estejam indisponíveis
+    if not parsed_initiatives:
+        logger.warning("Ativando gerador determinístico orientado a dados como salvaguarda.")
         parsed_initiatives = generate_deterministic_initiatives()
         summary_text = (
-            "Plano Executivo Integrado: Foco prioritário na contenção das maiores queixas de clientes reveladas na base, "
-            "bloqueio de pedidos com margem de contribuição negativa e mitigação de rupturas críticas."
+            "Plano Executivo Integrado: Diagnóstico baseado nas anomalias críticas do banco de dados, "
+            "priorizando estancamento de frete reverso, erradicação de margem negativa e mitigação de rupturas."
         )
 
     # Processamento determinístico rigoroso dos campos e cálculo do Score
@@ -473,7 +619,15 @@ def critic_cfo_node(state: AgentState) -> Dict[str, Any]:
 
     prompt = (
         f"Pacote de Iniciativas Submetidas:\n{inits_json}\n\n"
-        f"Potencial Total de EBITDA: R$ {state.get('total_ebitda_potential', 0.0):,.2f}\n"
+        f"Potencial Total de EBITDA: R$ {state.get('total_ebitda_potential', 0.0):,.2f}\n\n"
+        "Avalie as iniciativas acima contra a rubrica formal do case.\n"
+        "Responda EXCLUSIVAMENTE em formato JSON (sem texto adicional fora do bloco):\n"
+        "{\n"
+        '  "approved": true,\n'
+        '  "score": 85.0,\n'
+        '  "problems": [],\n'
+        '  "revision_instructions": ""\n'
+        "}"
     )
 
     critic_approved = True
@@ -483,7 +637,7 @@ def critic_cfo_node(state: AgentState) -> Dict[str, Any]:
     revision_inst = ""
 
     try:
-        llm = get_llm(temperature=0.1)
+        llm = get_llm(temperature=0.0)
         res = llm.invoke(
             [
                 SystemMessage(content=SYSTEM_CRITIC_CFO),
