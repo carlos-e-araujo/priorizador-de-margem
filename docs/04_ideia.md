@@ -3,7 +3,7 @@
 > **Documento de Concepção, Arquitetura e Engenharia de Produto (Single Source of Truth)**  
 > **Referência do Case:** [00_case_vertice.md](file:///home/carlos/Projects/prototipo_final/docs/00_case_vertice.md) | [01_modulo_c.md](file:///home/carlos/Projects/prototipo_final/docs/01_modulo_c.md)  
 > **Fundamentação Técnica:** [02_eloagents_e_agent_arquitectures.md](file:///home/carlos/Projects/prototipo_final/docs/02_eloagents_e_agent_arquitectures.md) | [03_kpis_e_como_usar.md](file:///home/carlos/Projects/prototipo_final/docs/03_kpis_e_como_usar.md)  
-> **Dados do Case:** Tratados e alocados em `backend/data/` (`vendas_tratado.csv`, `atendimento_tratado.csv`, `estoque_tratado.csv`, `marketing_tratado.csv`, `clientes_tratado.csv`)  
+> **Dados do Case:** Alocados em `backend/data/` (`vendas_tratado.csv`, `atendimento_tratado.csv`, `estoque_tratado.csv`, `marketing_tratado.csv`, `clientes_tratado.csv`)  
 > **Stack do Protótipo:** Frontend TanStack (React + TanStack Router/Query/Table) · Backend FastAPI + SQLAlchemy · Banco de Dados SQLite (`vertice.db`) · Motor de IA LangGraph + EloAgents (`openai/gemini-3-flash-preview`)  
 > **Público-Alvo da Solução:** Diretoria Executiva da Vértice Retail (CEO, CFO, CMO, COO) — Usuários não técnicos  
 > **Tempo de Demonstração (Pitch):** 60 segundos cronometrados
@@ -19,32 +19,31 @@ O protótipo do **Módulo C (Motor de Priorização de Margem)** foi projetado p
 
 > *"Como podemos usar dados e IA para melhorar rentabilidade, eficiência operacional e qualidade da tomada de decisão nos próximos 90 dias?"*
 
-### 1.2 O Papel do Módulo C: Descoberta Ativa e Dinâmica
-O Módulo C **não é um dashboard passivo com números estáticos** e **não é um gerador de texto com conselhos pré-fabricados (*hardcoded*)**:
-- **Descoberta Dinâmica de Problemas:** A ferramenta conecta-se diretamente às tabelas do banco relacional SQLite e calcula os indicadores vitais em tempo real via consultas SQL determinísticas.
-- **Ingestão dos Dados Tratados do Case:** O banco SQLite é alimentado a partir dos arquivos tratados em `backend/data/`, garantindo fidelidade contábil e transacional.
-- **Investigação Autônoma por IA:** Ao acionar o motor, agentes inteligentes analisam as bases transacionais utilizando *tools* em Python, diagnosticando onde a margem está sendo consumida e estruturando iniciativas fundamentadas nos dados concretos encontrados.
-- **Algoritmo Determinístico de Priorização:** Cada oportunidade identificada é ranqueada com base em uma fórmula matemática auditável (Impacto em R$, Esforço, Risco e Horizonte de Captura em 30, 60 e 90 dias).
-- **Zero Premissas Fixas:** Nenhum valor financeiro, percentual de devolução ou texto de iniciativa é inserido de forma fixa no código. O comportamento, os números exibidos e as recomendações derivam exclusivamente dos dados presentes no banco de dados e do raciocínio executivo dos agentes.
+### 1.2 O Papel do Módulo C: Arquitetura 100% Dinâmica e Orientada a Dados
+O Módulo C é um **sistema ativo de tomada de decisão executiva**, construído sob o princípio fundamental de **zero premissas ou conclusões *hardcoded***:
+- **Frontend Agnóstico a Conteúdo:** A interface TanStack não pré-determina títulos de cartões de diagnóstico, não fixa nomes de métricas e não traz controles pré-moldados. Toda a visualização é renderizada dinamicamente a partir dos contratos estruturados fornecidos pelo backend.
+- **Backend Orientado a Descoberta:** Os serviços analíticos e as ferramentas em Python processam a base SQLite em tempo real. O backend consolida os indicadores em coleções dinâmicas de cartões de KPI e descobre alavancas operacionais a partir das evidências concretas dos dados.
+- **Inteligência Autônoma por IA:** Ao ser acionado, o fluxo multiagente com reflexão investiga as transações, diagnostica as causas-raiz de perda de rentabilidade, formula iniciativas estruturadas e calcula o Score Multicritério determinístico.
+- **Simulação Dinâmica de Alavancas:** Os parâmetros de sensibilidade (sliders) não são fixos no frontend; eles são gerados dinamicamente a partir das alavancas identificadas pelo motor de IA e calculados pelo backend com base no volume real do banco.
 
 ---
 
 ## 2. Jornada do Executivo & Roteiro da Demonstração de 60 Segundos
 
-A aplicação foi planejada para garantir fluidez máxima: em 4 passos cronometrados e intuitivos, um executivo sem conhecimento técnico visualiza a origem das perdas, dispara a priorização inteligente, simula cenários e aprova o plano de ação.
+A aplicação foi planejada para garantir fluidez máxima: em 4 passos cronometrados e intuitivos, um executivo sem conhecimento técnico visualiza os indicadores calculados pelo backend, dispara o motor de priorização inteligente, simula sensibilidades em alavancas descobertas e aprova ações com rastreabilidade total.
 
 ### 2.1 Fluxo Cronometrado da Demonstração (Mermaid)
 
 ```mermaid
 flowchart LR
-    S1["<b>1. Diagnóstico Cardinal</b><br/>(00s - 15s)<br/>Cálculo em tempo real de KPIs de Margem via SQLite"] --> S2["<b>2. Motor em Ação</b><br/>(15s - 35s)<br/>Agentes investigam dados e ranqueiam iniciativas dinamicamente"]
-    S2 --> S3["<b>3. Simulação de Alavancas</b><br/>(35s - 50s)<br/>Sensibilidade interativa com recálculo instantâneo de Delta EBITDA"]
-    S3 --> S4["<b>4. Decisão & Auditoria</b><br/>(50s - 60s)<br/>Aprovação de Quick Wins e conferência da rubrica do Agente CFO"]
+    S1["<b>1. Diagnóstico Inicial Dinâmico</b><br/>(00s - 15s)<br/>Renderização de KPI Cards gerados pelo Backend via SQLite"] --> S2["<b>2. Motor em Ação</b><br/>(15s - 35s)<br/>Agentes investigam dados via tools e estruturam iniciativas ranqueadas"]
+    S2 --> S3["<b>3. Simulação de Alavancas</b><br/>(35s - 50s)<br/>Sliders gerados dinamicamente a partir das alavancas descobertas pela IA"]
+    S3 --> S4["<b>4. Decisão & Auditoria</b><br/>(50s - 60s)<br/>Aprovação de iniciativas por horizonte e inspeção de governança"]
 ```
 
 ### 2.2 Ciclo de Interação Ponta a Ponta (Sequence Diagram)
 
-O diagrama abaixo detalha a interação entre o Executivo, a interface TanStack, o backend FastAPI, as tabelas SQLite e os Agentes de IA durante os 60 segundos:
+O diagrama abaixo ilustra o fluxo reativo e dinâmico entre o Executivo, a interface TanStack, a API FastAPI, o SQLite e os Agentes de IA:
 
 ```mermaid
 sequenceDiagram
@@ -58,35 +57,38 @@ sequenceDiagram
     Note over Exec,DB: 00s - 15s: Carregamento Inicial & Diagnóstico Dinâmico
     Exec->>UI: Acessa a aplicação
     UI->>API: GET /api/v1/kpis/summary
-    API->>DB: Executa queries SQL determinísticas (receita, margem %, pedidos deficitários)
-    DB-->>API: Retorna agregações reais calculadas sobre os dados
-    API-->>UI: JSON com KPIs dinâmicos
-    UI-->>Exec: Renderiza Stat Cards cardinais com alerta de vazamento de margem
+    API->>DB: Executa consultas analíticas determinísticas sobre as tabelas
+    DB-->>API: Agregações e volumetria calculadas em tempo real
+    API-->>UI: Retorna coleção dinâmica de KpiCardItem (títulos, valores, status e alertas)
+    UI-->>Exec: Renderiza dinamicamente os Stat Cards recebidos (sem conteúdo fixo no código)
 
     Note over Exec,Agent: 15s - 35s: Descoberta e Priorização Autônoma por IA
     Exec->>UI: Clica em "[ Rodar Motor de Priorização ]"
     UI->>API: POST /api/v1/prioritization/run
     API->>Agent: Dispara fluxo multiagente (Especialistas: Comercial, Operações, CX)
     loop Investigação via Tools Python/SQL
-        Agent->>DB: Consultas analíticas (SKUs com MC < 0, motivos de retorno, tickets WISMO)
-        DB-->>Agent: Dados factuais apurados nas tabelas
+        Agent->>DB: Consultas analíticas determinísticas (vendas, estoque, suporte)
+        DB-->>Agent: Fatos observados brutos apurados nas tabelas
     end
-    Agent->>Agent: Aplica Algoritmo de Score e valida plano na Rubrica do CFO
-    Agent->>DB: Persiste ciclo em prioritization_runs e initiatives
-    API-->>UI: Retorna iniciativas estruturadas e ranqueadas por Score
-    UI-->>Exec: Exibe TanStack Table com filtros [30d | 60d | 90d] e badges de esforço/risco
+    Agent->>Agent: Formula iniciativas, calcula Score Multicritério e valida plano na Rubrica do CFO
+    Agent->>DB: Persiste o ciclo em prioritization_runs e initiatives
+    API-->>UI: Retorna lista de iniciativas ranqueadas e alavancas de sensibilidade disponíveis
+    UI-->>Exec: Renderiza TanStack Table dinâmica com filtros de horizonte e badges semânticos
 
-    Note over Exec,API: 35s - 50s: Simulação Interativa de Sensibilidade
-    Exec->>UI: Ajusta slider de alavanca (ex: redução de devoluções ou frete deficitário)
+    Note over Exec,API: 35s - 50s: Simulação Dinâmica de Alavancas
+    UI->>API: GET /api/v1/simulator/levers
+    API-->>UI: Retorna lista de alavancas de sensibilidade descobertas pelo motor
+    UI-->>Exec: Renderiza sliders interativos gerados a partir do payload recebido
+    Exec->>UI: Ajusta slider de uma das alavancas descobertas
     UI->>API: POST /api/v1/simulator/simulate (parâmetros dinâmicos)
-    API->>DB: Consulta a volumetria e custos reais na base
+    API->>DB: Recalcula impacto com base na volumetria das tabelas
     API-->>UI: Retorna Delta EBITDA e Payback recalculados instantaneamente
-    UI-->>Exec: Atualiza card de projeção de impacto em tempo real
+    UI-->>Exec: Atualiza visualmente a projeção de impacto financeiro em tempo real
 
     Note over Exec,DB: 50s - 60s: Decisão Executiva & Rastreabilidade
-    Exec->>UI: Filtra horizonte "30 dias (Quick Wins)" e clica "[ Aprovar Iniciativa ]"
+    Exec->>UI: Filtra iniciativas por horizonte (ex: 30 dias) e clica "[ Aprovar ]"
     UI->>API: PATCH /api/v1/prioritization/initiatives/{id}/status
-    API->>DB: Atualiza status da iniciativa para APPROVED
+    API->>DB: Registra a aprovação da iniciativa no SQLite
     Exec->>UI: Abre gaveta de "Auditoria & Governança"
     UI->>API: GET /api/v1/audit/run/{run_id}
     API-->>UI: Retorna logs do processo, queries executadas e nota da rubrica do CFO
@@ -95,12 +97,12 @@ sequenceDiagram
 
 ### 2.3 Roteiro Cronometrado para o Pitch Executivo
 
-| Tempo | Tela / Ação do Usuário | O que o Executivo Vê na Tela | Mensagem Verbal do Apresentador |
+| Tempo | Tela / Ação do Usuário | O que a Interface Exibe (Dinâmico) | Narrativa Verbal do Apresentador |
 | :---: | :--- | :--- | :--- |
-| **00s - 15s** | **Diagnóstico Cardinal**<br/>(Visualização imediata ao abrir) | 4 Stat Cards dinâmicos calculados a partir dos dados do SQLite:<br/>• Receita Líquida consolidada<br/>• Margem de Contribuição atual vs. meta<br/>• **Hemorragia: montante perdido em pedidos deficitários ($MC < 0$)**<br/>• Custos de fricção pós-venda (Logística Reversa e Atendimento) | *"A Vértice cresce em volume bruto, mas nossa ferramenta conecta-se diretamente à base operacional e calcula em tempo real os grandes números de rentabilidade, apontando exatamente onde a margem está sendo consumida por fretes deficitários e devoluções."* |
-| **15s - 35s** | **Tabela de Priorização**<br/>(Clique em `[ Rodar Motor ]`) | Os agentes de IA exploram os dados do banco e alimentam a TanStack Table em tempo real. A lista exibe as iniciativas ordenadas dinamicamente pelo Score Composto, destacando badges de **Pilar**, **Impacto Estimado (R$)**, **Esforço**, **Risco** e **Horizonte (30d / 60d / 90d)**. | *"Ao acionar o Motor de Priorização, agentes de IA investigam as bases de vendas, estoque e tickets sem opiniões pré-programadas. Eles descobrem as causas-raiz e ranqueiam onde agir primeiro sob uma régua matemática de Impacto Financeiro versus Esforço e Risco."* |
-| **35s - 50s** | **Simulador de Alavancas**<br/>(Ajuste de slider interativo) | O executivo move o slider de sensibilidade de uma alavanca identificada pelo motor. A interface invoca o backend e recalcula instantaneamente o **$\Delta$ EBITDA Potencial adicionado ao caixa** com base na volumetria real do banco. | *"Com nosso simulador interativo, a diretoria testa hipóteses de sensibilidade em segundos. O recálculo é determinístico sobre a base de dados da empresa, eliminando qualquer dependência de planilhas manuais."* |
-| **50s - 60s** | **Decisão & Rastreabilidade**<br/>(Filtro `30 dias` e clique em `[ Aprovar ]`) | O usuário clica na aba de 30 dias (Quick Wins), aprova a ação para execução imediata e abre a gaveta lateral de auditoria, onde inspeciona o parecer e a nota de validação emitida pelo Agente Crítico (CFO). | *"Em 60 segundos, saímos de dados fragmentados para um plano de 90 dias priorizado, simulado, aprovado e com total rastreabilidade executiva e governança de IA."* |
+| **00s - 15s** | **Diagnóstico Dinâmico**<br/>(Abertura da aplicação) | O container de métricas renderiza a lista de `KpiCardItem` retornada pela API. Os cards exibem automaticamente os indicadores de saúde financeira e sinalizam pontos de atenção detectados no banco de dados. | *"A nossa ferramenta conecta-se diretamente à base operacional e calcula em tempo real os grandes números de rentabilidade da empresa, destacando automaticamente onde existem anomalias e consumo indevido de margem."* |
+| **15s - 35s** | **Tabela de Priorização**<br/>(Clique em `[ Rodar Motor ]`) | A interface dispara o fluxo multiagente. A TanStack Table renderiza a lista de iniciativas dinamicamente gerada pelos agentes, ordenada pelo Score Multicritério com badges de **Pilar**, **Impacto Estimado**, **Esforço**, **Risco** e **Horizonte (30d / 60d / 90d)**. | *"Ao acionar o Motor de Priorização, agentes de IA investigam as bases transacionais via ferramentas de código. Sem respostas pré-programadas, eles identificam as oportunidades reais e ranqueiam onde agir primeiro sob uma régua matemática de impacto versus esforço."* |
+| **35s - 50s** | **Simulador de Alavancas**<br/>(Ajuste em slider dinâmico) | O painel renderiza os sliders correspondentes às alavancas descobertas pelo motor de IA. Ao mover qualquer controle, o backend recalcula instantaneamente o **$\Delta$ EBITDA Potencial adicionado ao caixa** com base na volumetria do banco. | *"O sistema expõe as principais alavancas operacionais identificadas nos dados. O executivo pode simular cenários de sensibilidade diretamente na interface, vendo o impacto no EBITDA recalculado na hora sobre a base real de clientes."* |
+| **50s - 60s** | **Decisão & Rastreabilidade**<br/>(Filtro de horizonte e clique em `[ Aprovar ]`) | O executivo filtra as iniciativas de curto prazo (Quick Wins), formaliza a aprovação no sistema e abre a gaveta de auditoria para verificar as consultas SQL executadas e o parecer emitido pelo Agente Crítico (CFO). | *"Em 60 segundos, transformamos dados dispersos em um plano de ação priorizado, simulado e aprovado pela liderança, com total rastreabilidade das evidências e governança de IA."* |
 
 ---
 
@@ -110,17 +112,17 @@ A arquitetura desacopla a camada de apresentação, a API REST, a persistência 
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["Frontend: TanStack & React (Interface Executiva)"]
-        UI1["TanStack Router (Navegação SPA sem recarregamento)"]
+    subgraph Frontend["Frontend: TanStack & React (Interface Dinâmica)"]
+        UI1["TanStack Router (Navegação SPA veloz)"]
         UI2["TanStack Query (Cache, revalidação e mutações reativas)"]
-        UI3["TanStack Table (Tabela interativa com ordenação e filtros por horizonte)"]
-        UI4["Componentes Executivos: Stat Cards, Sliders de Simulação e Drawer de Auditoria"]
+        UI3["TanStack Table (Tabela dinâmica orientada a dados da API)"]
+        UI4["Componentes Reutilizáveis: KpiCardContainer, DynamicSliderPanel e AuditDrawer"]
     end
 
     subgraph Backend["Backend: FastAPI (Camada de Serviços & REST)"]
-        API1["/api/v1/kpis (Cálculo determinístico de métricas agregadas)"]
+        API1["/api/v1/kpis (Cálculo determinístico de métricas e coleção de cards)"]
         API2["/api/v1/prioritization (Orquestração do fluxo multiagente e ranking)"]
-        API3["/api/v1/simulator (Cálculo em tempo real de sensibilidade de margem)"]
+        API3["/api/v1/simulator (Geração de alavancas e recálculo dinâmico de sensibilidade)"]
         API4["/api/v1/audit (Logs de processo, memória de cálculo e rubrica do crítico)"]
     end
 
@@ -314,8 +316,6 @@ erDiagram
 
 ### 4.1 Modelos SQLAlchemy (`backend/src/backend/models/dataroom.py` e `engine.py`)
 
-Aderência exata aos tipos e colunas dos CSVs tratados:
-
 ```python
 # backend/src/backend/models/dataroom.py
 from sqlalchemy import Boolean, Float, Integer, String, Text
@@ -488,25 +488,35 @@ class Initiative(Base):
 
 ---
 
-## 5. Design da API FastAPI & Documentação dos Endpoints
+## 5. Design da API FastAPI & Contratos Dinâmicos
 
 A API é estruturada de forma modular, com validação rígida via Pydantic v2 e documentação automática OpenAPI Swagger acessível em `/docs`.
 
-### 5.1 Contratos Pydantic v2 (`backend/src/backend/schemas/`)
+### 5.1 Contratos Pydantic v2 100% Dinâmicos (`backend/src/backend/schemas/`)
+
+Para evitar campos engessados ou assumidos no frontend, os dados são transmitidos em coleções genéricas e dinâmicas:
 
 ```python
 from pydantic import BaseModel, Field
-from typing import Literal
+from typing import Literal, Optional
+
+# --- Contrato Dinâmico de Cards de Diagnóstico ---
+class KpiCardItem(BaseModel):
+    id: str = Field(..., description="Identificador único do indicador")
+    title: str = Field(..., description="Título dinâmico do card (ex: Margem de Contribuição, Receita Líquida, etc.)")
+    category: str = Field(..., description="Pilar de negócio (Comercial, Operações, CX, Estoque)")
+    value: float = Field(..., description="Valor numérico calculado deterministicamente")
+    formatted_value: str = Field(..., description="Valor formatado para exibição (ex: 'R$ 1.250.000,00' ou '28.5%')")
+    unit: str = Field(..., description="Unidade de medida ('BRL', 'PCT', 'QTY')")
+    status: Literal["normal", "warning", "critical"] = Field(..., description="Estado semântico para badge visual")
+    trend: Optional[str] = Field(None, description="Variação ou benchmark comparativo")
+    subtitle: Optional[str] = Field(None, description="Texto de apoio contextual derivado dos dados")
 
 class KpiSummaryResponse(BaseModel):
-    receita_liquida_total: float = Field(..., description="Receita líquida total calculada via SQL")
-    margem_contribuicao_total: float = Field(..., description="Margem de contribuição absoluta em R$")
-    margem_contribuicao_pct: float = Field(..., description="Percentual de margem de contribuição sobre a receita líquida")
-    pedidos_margem_negativa_qtd: int = Field(..., description="Volume de pedidos onde mc_negativa é True")
-    prejuizo_margem_negativa_brl: float = Field(..., description="Montante total de perda em pedidos com MC < 0")
-    custo_logistica_reversa_brl: float = Field(..., description="Custo de frete em itens devolvidos")
-    custo_atendimento_total_brl: float = Field(..., description="Custo operacional de chamados de suporte")
+    period: str = Field(..., description="Período contábil analisado")
+    cards: list[KpiCardItem] = Field(..., description="Coleção dinâmica de cards gerada pelo backend")
 
+# --- Contrato Dinâmico de Iniciativas do Motor de Priorização ---
 class InitiativeResponse(BaseModel):
     id: int
     run_id: int
@@ -535,27 +545,41 @@ class PrioritizationRunResponse(BaseModel):
     summary: str
     initiatives: list[InitiativeResponse]
 
-class SimulatorRequest(BaseModel):
-    reduction_negative_margin_pct: float = Field(..., ge=0.0, le=1.0)
-    reduction_return_cost_pct: float = Field(..., ge=0.0, le=1.0)
-    reduction_wismo_tickets_pct: float = Field(..., ge=0.0, le=1.0)
+# --- Contrato Dinâmico do Simulador de Sensibilidade ---
+class SimulatorLever(BaseModel):
+    id: str = Field(..., description="Identificador da alavanca descoberta pela IA")
+    title: str = Field(..., description="Nome da alavanca descoberto pelo motor")
+    pilar: str = Field(..., description="Pilar de negócio associado")
+    description: str = Field(..., description="Descrição da ação de sensibilidade")
+    current_value_pct: float = Field(..., description="Valor inicial percentual")
+    min_pct: float = Field(0.0, description="Limite mínimo do slider")
+    max_pct: float = Field(1.0, description="Limite máximo do slider")
+    step: float = Field(0.05, description="Incremento do controle")
+    baseline_cost_brl: float = Field(..., description="Montante base de custo/perda calculado nas tabelas")
 
-class SimulatorResponse(BaseModel):
-    delta_ebitda_brl: float
-    payback_months: float
-    breakdown_by_lever: dict[str, float]
+class SimulatorConfigResponse(BaseModel):
+    levers: list[SimulatorLever] = Field(..., description="Lista de alavancas ativas descobertas pelo motor")
+
+class SimulatorRunRequest(BaseModel):
+    adjustments: dict[str, float] = Field(..., description="Dicionário dinâmico { lever_id: target_pct }")
+
+class SimulatorRunResponse(BaseModel):
+    delta_ebitda_brl: float = Field(..., description="Total recalculado de ganho anual em EBITDA")
+    payback_months: float = Field(..., description="Tempo estimado de retorno")
+    impact_by_lever: dict[str, float] = Field(..., description="Detalhamento financeiro por alavanca")
 ```
 
 ### 5.2 Tabela Completa de Endpoints da API REST
 
 | Método | Rota | Descrição Executiva | Query / Payload | Retorno Principal |
 | :---: | :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/kpis/summary` | Executa consultas determinísticas no SQLite e retorna os indicadores vitais de rentabilidade. | Nenhuma | Objeto `KpiSummaryResponse`. |
+| `GET` | `/api/v1/kpis/summary` | Executa consultas determinísticas no SQLite e retorna a coleção dinâmica de cartões de KPI. | Nenhuma | Objeto `KpiSummaryResponse` com lista de `KpiCardItem`. |
 | `GET` | `/api/v1/kpis/breakdown` | Detalha receita e margem agregadas por dimensão de negócio. | `dimension=categoria\|canal` | Lista de agregações determinísticas. |
 | `POST` | `/api/v1/prioritization/run` | Dispara o fluxo multiagente com reflexão para investigar as tabelas e ranquear iniciativas. | Opcional: `{ "force_refresh": false }` | Objeto `PrioritizationRunResponse` completo. |
 | `GET` | `/api/v1/prioritization/latest` | Obtém o último ciclo de priorização gravado no banco de dados. | Nenhuma | Ciclo ativo e iniciativas ordenadas por Score. |
 | `PATCH`| `/api/v1/prioritization/initiatives/{id}/status` | Registra a aprovação ou rejeição de uma ação pela diretoria. | `{ "status": "APPROVED" \| "REJECTED" }` | Registro atualizado da iniciativa. |
-| `POST` | `/api/v1/simulator/simulate` | Recalcula em tempo real o $\Delta$ EBITDA aplicando os percentuais dos sliders sobre o volume real do banco. | `SimulatorRequest` | `SimulatorResponse`. |
+| `GET` | `/api/v1/simulator/levers` | Retorna as alavancas operacionais identificadas pelo motor para alimentar os sliders da interface. | Nenhuma | Objeto `SimulatorConfigResponse`. |
+| `POST` | `/api/v1/simulator/simulate` | Recalcula em tempo real o $\Delta$ EBITDA aplicando os percentuais dos sliders dinâmicos sobre o volume real do banco. | `SimulatorRunRequest` | Objeto `SimulatorRunResponse`. |
 | `GET` | `/api/v1/audit/run/{run_id}` | Retorna as evidências SQL, logs de raciocínio dos agentes e a rubrica emitida pelo Agente Crítico (CFO). | `run_id` | Objeto detalhado de governança e rastreabilidade. |
 | `GET` | `/api/v1/audit/export/{run_id}` | Gera e exporta o **Artefato de Processo** em Markdown (.md) em conformidade com a Seção 9 do case. | `run_id` | Download de arquivo `relatorio_priorizacao_run_{id}.md`. |
 
@@ -572,7 +596,7 @@ flowchart TD
     START((START)) --> orquestrador["Orquestrador do Diagnóstico"]
     
     subgraph Paralelo["Execução Especializada via Tools Python/SQL"]
-        orquestrador --> esp_comercial["Especialista Comercial<br/>(Tools: Margem, Descontos, Pedidos MC < 0)"]
+        orquestrador --> esp_comercial["Especialista Comercial<br/>(Tools: Margem, Descontos, Transações Deficitárias)"]
         orquestrador --> esp_operacoes["Especialista de Operações<br/>(Tools: Devoluções por Causa, Frete, Estoque)"]
         orquestrador --> esp_cx["Especialista de CX & Suporte<br/>(Tools: Chamados WISMO, Custo por Ticket)"]
     end
@@ -634,7 +658,7 @@ from backend.models.dataroom import Atendimento, Estoque, Venda
 
 @tool
 def query_negative_margin_summary() -> str:
-    """Calcula o volume de pedidos com margem negativa (mc_negativa = True), receita perdida e custo total de frete."""
+    """Calcula o volume de pedidos com margem negativa (mc_negativa = True), receita líquida associada e prejuízo total."""
     with SessionLocal() as session:
         stmt = select(
             func.count(Venda.order_id).label("total_pedidos"),
@@ -651,7 +675,7 @@ def query_negative_margin_summary() -> str:
 
 @tool
 def query_returns_by_category() -> str:
-    """Calcula a taxa e o custo financeiro de devoluções agrupadas por categoria e motivo de devolução."""
+    """Calcula a taxa e o custo financeiro de devoluções agrupadas por categoria de produto."""
     with SessionLocal() as session:
         stmt = select(
             Venda.categoria,
@@ -778,8 +802,6 @@ Se o plano estiver consistente e defensável para a diretoria, marque "approved"
 
 ### 6.6 Engenharia de Resiliência: Parsing de JSON com 6 Fallbacks
 
-Para evitar que respostas do LLM com textos conversacionais ou markdown quebrado causem erro 500 no FastAPI, o módulo `backend/src/backend/services/parser.py` implementa o extrator defensivo:
-
 ```python
 import json
 import re
@@ -842,30 +864,27 @@ def parse_json_from_response(text: str) -> dict:
 
 ---
 
-## 7. Frontend TanStack: Simplicidade e Usabilidade Executiva
+## 7. Frontend TanStack: Simplicidade e Renderização Dinâmica
 
-O design da interface prioriza clareza e agilidade cognitiva para executivos não técnicos. Elimina-se a sobrecarga visual de painéis complexos em favor de um layout focado em decisão.
+O frontend é desenhado sob o princípio de **apresentação puramente orientada a dados**: os componentes recebem os contratos da API e montam as telas sem embutir rótulos ou métricas estáticas no código.
 
-### 7.1 Arquitetura Visual da Interface (Mermaid)
+### 7.1 Arquitetura Visual Dinâmica (Mermaid)
 
 ```mermaid
 flowchart TD
-    subgraph Layout["Estrutura da Interface Executiva (TanStack UI)"]
-        subgraph TopBar["Topo: Diagnóstico Cardinal em Tempo Real (00s - 15s)"]
-            K1["Stat Card 1: Receita Líquida Total<br/>(Calculada via SQL no SQLite)"]
-            K2["Stat Card 2: Margem de Contribuição %<br/>(Apurada com comparação dinâmica vs. meta)"]
-            K3["Stat Card 3: Vazamento de Margem<br/>(Perda acumulada em pedidos com mc_negativa)"]
-            K4["Stat Card 4: Fricção Operacional Pós-Venda<br/>(Logística reversa + custos de atendimento)"]
+    subgraph Layout["Estrutura Dinâmica da Interface (TanStack UI)"]
+        subgraph TopBar["Hero Section: Coleção Dinâmica de KPI Cards"]
+            KContainer["<b>KpiCardContainer</b><br/>Itera sobre <code>cards: KpiCardItem[]</code> retornado pela API<br/>Renderiza título, valor formatado, status e badge semântico"]
         end
 
-        subgraph MainSection["Centro: Tabela Interativa de Priorização (15s - 35s)"]
+        subgraph MainSection["Área Central: Tabela Dinâmica de Priorização"]
             Controls["Barra de Controle: Botão [ Rodar Motor de IA ] | Abas: [ Todas | 30d Quick Wins | 60d | 90d ]"]
-            Table["TanStack Table:<br/>Colunas ordenáveis: Score | Iniciativa | Fato dos Dados | Impacto R$ | Esforço | Risco | Ação"]
+            Table["<b>TanStack Table</b><br/>Itera sobre <code>initiatives: InitiativeResponse[]</code> geradas pelo motor<br/>Colunas ordenáveis: Score | Iniciativa | Fato dos Dados | Impacto R$ | Esforço | Risco | Ação"]
         end
 
-        subgraph AuxSection["Apoio: Simulação Dinâmica & Governança (35s - 60s)"]
-            Sim["Simulador de Alavancas (Sliders interativos)<br/>Recálculo em tempo real do Delta EBITDA"]
-            Drawer["Gaveta Lateral de Auditoria & Governança<br/>Rastreabilidade das consultas SQL e Rubrica do CFO"]
+        subgraph AuxSection["Painel Lateral: Simulação de Sensibilidade e Governança"]
+            Sim["<b>DynamicSliderPanel</b><br/>Itera sobre <code>levers: SimulatorLever[]</code> descobertas pela IA<br/>Recálculo em tempo real do Delta EBITDA via POST /simulate"]
+            Drawer["<b>AuditDrawer</b><br/>Exibe logs de processo, queries executadas e nota da rubrica do CFO"]
         end
 
         TopBar --> MainSection
@@ -873,36 +892,31 @@ flowchart TD
     end
 ```
 
-### 7.2 Especificação das Telas e Componentes
+### 7.2 Especificação dos Componentes Dinâmicos
 
-#### 1. Top Bar & Hero KPI Cards (Diagnóstico Imediato)
-Exibe no topo de todas as páginas 4 cartões com leitura instantânea:
-- **Receita Líquida:** Somatório dinâmico de `receita_liquida` do período consultado.
-- **Margem de Contribuição Média (%):** Relação percentual calculada via SQL (`margem_contribuicao / receita_liquida`), sinalizando visualmente desvios em relação à meta.
-- **Hemorragia de Margem ($MC < 0$):** Identificação automática do volume e valor financeiro de pedidos deficitários (`mc_negativa = True`).
-- **Custos de Fricção Pós-Venda:** Consolidação dos custos operacionais decorrentes de devoluções (`devolvido = True`) e chamados de suporte ao cliente (`custo_operacional_ticket`).
+#### 1. `KpiCardContainer` e `KpiCard`
+- Recebe a lista de `cards: KpiCardItem[]` do endpoint `GET /api/v1/kpis/summary`.
+- Mapeia cada item para um componente de visualização limpa com:
+  - Título dinâmico e tag de pilar.
+  - Valor cardinal formatado pelo backend (ex: moeda, percentual ou contagem).
+  - Badge de status semântico (`normal` em cinza/neutro, `warning` em amarelo/âmbar, `critical` em vermelho).
+  - Variação/tendência e subtítulo explicativo.
 
-#### 2. Tabela de Priorização (O Motor em Ação)
-- **Barra de Controle Superior:**
-  - Botão de ação primária: `[ Rodar Motor de Priorização (IA) ]` com indicador de progresso sutil.
-  - Seletor de abas: `[ Todas as Iniciativas ]` `[ 30 Dias (Quick Wins) ]` `[ 60 Dias (Médio Prazo) ]` `[ 90 Dias (Estruturais) ]`.
-- **TanStack Table:**
-  - Colunas ordenáveis: **Score Composto** | **Iniciativa & Pilar** | **Fato Observado (SQL)** | **Impacto Estimado (R$)** | **Esforço** | **Risco** | **Decisão**.
-  - Badges semânticos de alta legibilidade (cores contrastantes para esforço baixo/médio/alto).
-  - Botões de ação direta em cada linha: `[ Aprovar ]` para formalizar a decisão executiva e `[ Ver Detalhes ]` para abrir o diagnóstico completo.
+#### 2. `PrioritizationTable` (TanStack Table)
+- Renderiza a lista de `initiatives: InitiativeResponse[]` gerada pelo ciclo de priorização ativo.
+- Suporta filtros por abas de horizonte: `[ Todas ]` `[ 30 Dias (Quick Wins) ]` `[ 60 Dias ]` `[ 90 Dias ]`.
+- Badges semânticos de alta legibilidade para níveis de Esforço (1=Baixo, 2=Médio, 3=Alto) e Risco.
+- Botões de ação direta por linha: `[ Aprovar ]` (chama o endpoint de atualização de status) e `[ Detalhes ]` (abre modal com o Fato Observado, Hipótese e Recomendação).
 
-#### 3. Simulador Interativo de Alavancas de Margem
-Painel com sliders contínuos conectados ao endpoint `/api/v1/simulator/simulate`:
-- *Mitigação de Devoluções por Tamanho (0% a 50%)*
-- *Eliminação de Frete Grátis em Pedidos Deficitários (0% a 100%)*
-- *Automação de Suporte com Triagem por IA (0% a 80%)*
-- **Card de Saída:** Exibe em destaque verde o **$\Delta$ EBITDA Potencial Adicionado ao Caixa** e o **Payback Estimado em Meses**, recalculados instantaneamente com base no volume do banco.
+#### 3. `DynamicSliderPanel` (Simulador de Sensibilidade)
+- Consome a lista de alavancas do endpoint `GET /api/v1/simulator/levers`.
+- Renderiza um slider interativo para cada alavanca retornada, respeitando os limites (`min_pct`, `max_pct`, `step`).
+- Ao mover qualquer slider, dispara mutação reativa via TanStack Query para `POST /api/v1/simulator/simulate`, exibindo o **$\Delta$ EBITDA recalculado** e o **Payback Estimado** no card de resultado.
 
-#### 4. Gaveta Lateral de Auditoria & Governança (Rastreabilidade do Case)
-Acionada por botão de transparência no rodapé:
-- Exibe as consultas SQL executadas pelas tools.
-- Apresenta o parecer textual e a nota numérica atribuída pelo **Agente Crítico Financeiro (CFO)**.
-- Confirmação de que todas as iniciativas que impactam preços, contratos ou fornecedores exigem aprovação humana obrigatória.
+#### 4. `AuditDrawer` (Transparência e Governança)
+- Acionado por botão discreto de rodapé.
+- Carrega os dados de `GET /api/v1/audit/run/{run_id}`.
+- Exibe o parecer do **Agente Crítico Financeiro (CFO)**, a nota da rubrica (0 a 100), as queries SQL executadas pelas tools e o botão para baixar o relatório formal em Markdown.
 
 ---
 
@@ -940,9 +954,9 @@ prototipo_final/
 │           │   └── engine.py
 │           ├── schemas/
 │           │   ├── __init__.py
-│           │   ├── kpi.py
-│           │   ├── initiative.py
-│           │   └── simulator.py
+│           │   ├── kpi.py              # KpiCardItem, KpiSummaryResponse
+│           │   ├── initiative.py       # InitiativeResponse, PrioritizationRunResponse
+│           │   └── simulator.py        # SimulatorLever, SimulatorRunRequest/Response
 │           ├── services/
 │           │   ├── kpi_service.py
 │           │   ├── agent_service.py
@@ -966,17 +980,18 @@ prototipo_final/
         │   ├── index.tsx
         │   └── simulator.tsx
         ├── components/
-        │   ├── KpiCard.tsx
-        │   ├── PrioritizationTable.tsx
-        │   ├── ScenarioSlider.tsx
-        │   └── AuditDrawer.tsx
+        │   ├── KpiCardContainer.tsx    # Container dinâmico de cards
+        │   ├── KpiCard.tsx             # Card individual reutilizável
+        │   ├── PrioritizationTable.tsx # Tabela TanStack dinâmica
+        │   ├── DynamicSliderPanel.tsx  # Painel de sliders orientados à API
+        │   └── AuditDrawer.tsx         # Gaveta com parecer do Agente Crítico (CFO)
         └── services/
             └── api.ts
 ```
 
 ### 8.2 Script de Carga dos Dados dos CSVs (`backend/src/backend/seed.py`)
 
-O script abaixo lê os dados tratados dos arquivos CSV em `backend/data/` e popula as tabelas do SQLite sem gerar nenhum dado inventado:
+O script abaixo lê os dados tratados dos arquivos CSV em `backend/data/` e popula as tabelas do SQLite:
 
 ```python
 import os
@@ -1010,7 +1025,6 @@ def seed_database():
             print(f"Lendo {filename} e carregando na tabela '{table_name}'...")
             df = pd.read_csv(csv_path)
 
-            # Ingestão em blocos para performance e baixo consumo de memória
             df.to_sql(
                 name=table_name,
                 con=conn,
@@ -1034,7 +1048,7 @@ if __name__ == "__main__":
 [ ] 1. Banco SQLite (vertice.db) estruturado com as tabelas do Data Room e tabelas de gestão.
 [ ] 2. Script de seed (seed.py) carrega os 5 CSVs tratados de backend/data/ sem dados inventados.
 [ ] 3. FastAPI rodando com endpoints /kpis, /prioritization, /simulator e /audit documentados no Swagger.
-[ ] 4. Cálculo de métricas 100% determinístico via Python/SQL sobre os dados reais do banco.
+[ ] 4. Frontend e Backend 100% dinâmicos: zero cards, rótulos ou sliders fixados no código.
 [ ] 5. Tools analíticas e parser defensivo com 6 fallbacks integrados ao motor LangGraph.
 [ ] 6. Agente LangGraph utilizando ChatLiteLLM com 'openai/gemini-3-flash-preview' e rubrica do CFO ativa.
 [ ] 7. Frontend TanStack limpo, responsivo, sem jargões técnicos e focado na usabilidade C-Level.
