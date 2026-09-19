@@ -288,17 +288,22 @@ def get_kpis_breakdown(dimension: str = "categoria", db: Optional[Session] = Non
             mc = float(r.margem_contribuicao or 0.0)
             mc_pct = (mc / rec * 100.0) if rec > 0 else 0.0
 
+            tot_pedidos = int(r.total_pedidos or 0)
+            pedidos_dev = int(r.pedidos_devolvidos or 0)
+            taxa_dev = (pedidos_dev / tot_pedidos * 100.0) if tot_pedidos > 0 else 0.0
+
             breakdown_rows.append(
                 KpiBreakdownRow(
-                    dimension_name=dim_name,
                     dimension_value=str(r.dimension_value),
-                    total_orders=int(r.total_pedidos or 0),
-                    net_revenue_brl=round(rec, 2),
-                    contribution_margin_brl=round(mc, 2),
-                    contribution_margin_pct=round(mc_pct, 1),
-                    negative_margin_orders=int(r.pedidos_deficitarios or 0),
-                    freight_cost_brl=round(float(r.custo_frete or 0.0), 2),
-                    returned_orders=int(r.pedidos_devolvidos or 0),
+                    total_pedidos=tot_pedidos,
+                    receita_liquida=round(rec, 2),
+                    formatted_receita_liquida=format_currency_brl(rec),
+                    margem_contribuicao=round(mc, 2),
+                    formatted_margem_contribuicao=format_currency_brl(mc),
+                    margem_contribuicao_pct=round(mc_pct, 1),
+                    pedidos_deficitarios=int(r.pedidos_deficitarios or 0),
+                    custo_frete=round(float(r.custo_frete or 0.0), 2),
+                    taxa_devolucao_pct=round(taxa_dev, 1),
                 )
             )
 

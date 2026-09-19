@@ -45,6 +45,7 @@ export interface InitiativeResponse {
   priority_score: number;
   requires_human_approval: boolean;
   approval_status: ApprovalStatus;
+  kpi_origin_id?: string | null;
 }
 
 export interface PrioritizationRunResponse {
@@ -67,6 +68,10 @@ export interface SimulatorLever {
   max_pct: number;
   step: number;
   baseline_cost_brl: number;
+  initiative_id?: number | null;
+  approval_status?: ApprovalStatus;
+  effort_level?: number;
+  kpi_origin_id?: string | null;
 }
 
 export interface SimulatorConfigResponse {

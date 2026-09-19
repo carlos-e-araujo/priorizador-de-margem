@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Sliders, TrendingUp, Clock, RotateCcw, Zap, AlertCircle } from 'lucide-react';
+import { Sliders, TrendingUp, Clock, RotateCcw, Zap, AlertCircle, CheckCircle, Ban, Layers } from 'lucide-react';
 import { api } from '../services/api';
 import type { SimulatorRunResponse } from '../types';
 import { ScenarioSlider } from './ScenarioSlider';
@@ -8,7 +8,7 @@ import { ScenarioSlider } from './ScenarioSlider';
 export const DynamicSliderPanel: React.FC = () => {
   const [, startTransition] = useTransition();
 
-  // Buscar alavancas descobertas pelo motor
+  // Buscar alavancas descobertas pelo motor (vinculadas 1:1 às iniciativas da esteira)
   const {
     data: leversData,
     isLoading: isLoadingLevers,
@@ -16,7 +16,7 @@ export const DynamicSliderPanel: React.FC = () => {
   } = useQuery({
     queryKey: ['simulator-levers'],
     queryFn: () => api.getSimulatorLevers(),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30, // 30s para sincronização dinâmica com a esteira
   });
 
   // Estado dos valores de ajuste { lever_id: target_pct }
@@ -34,7 +34,7 @@ export const DynamicSliderPanel: React.FC = () => {
     }
   }, [leversData]);
 
-  // Mutação para simulação
+  // Mutação para simulação determinística
   const simulateMutation = useMutation({
     mutationFn: (adj: Record<string, number>) => api.runSimulation({ adjustments: adj }),
     onSuccess: (data) => {
@@ -74,10 +74,16 @@ export const DynamicSliderPanel: React.FC = () => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
+  // Estatísticas de sincronização com a Esteira
+  const levers = leversData?.levers || [];
+  const approvedCount = levers.filter((l) => l.approval_status === 'APPROVED').length;
+  const rejectedCount = levers.filter((l) => l.approval_status === 'REJECTED').length;
+  const pendingCount = levers.filter((l) => l.approval_status !== 'APPROVED' && l.approval_status !== 'REJECTED').length;
+
   return (
     <div className="space-y-4">
       {/* Header do Painel */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <Sliders className="w-4 h-4" />
@@ -87,20 +93,45 @@ export const DynamicSliderPanel: React.FC = () => {
               Simulador de Sensibilidade & Alavancas Operacionais
             </h2>
             <p className="text-xs text-neutral-400">
-              Recálculo determinístico em tempo real do ganho sobre a volumetria do Dataroom
+              Conexão 1:1 com as iniciativas da esteira · Recálculo determinístico em tempo real
             </p>
           </div>
         </div>
 
-        <button
-          onClick={handleReset}
-          disabled={isLoadingLevers}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white text-xs transition disabled:opacity-50"
-          title="Restaurar alavancas para os valores padrão"
-        >
-          <RotateCcw className="w-3 h-3" />
-          Resetar
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Badges de Linhagem com a Esteira */}
+          {levers.length > 0 && (
+            <div className="hidden lg:flex items-center gap-1.5 text-[11px] bg-neutral-900 border border-neutral-800 px-2.5 py-1 rounded-lg">
+              <Layers className="w-3 h-3 text-neutral-400" />
+              <span className="text-neutral-400 font-medium">{levers.length} Iniciativas Ativas:</span>
+              {approvedCount > 0 && (
+                <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
+                  <CheckCircle className="w-2.5 h-2.5" /> {approvedCount}
+                </span>
+              )}
+              {pendingCount > 0 && (
+                <span className="text-amber-400 font-semibold flex items-center gap-0.5">
+                  <Clock className="w-2.5 h-2.5" /> {pendingCount}
+                </span>
+              )}
+              {rejectedCount > 0 && (
+                <span className="text-rose-400 font-semibold flex items-center gap-0.5">
+                  <Ban className="w-2.5 h-2.5" /> {rejectedCount}
+                </span>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleReset}
+            disabled={isLoadingLevers}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white text-xs transition disabled:opacity-50"
+            title="Restaurar alavancas para os valores padrão"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Resetar
+          </button>
+        </div>
       </div>
 
       {/* Card de Projeção Executiva (Delta EBITDA & Payback) */}
@@ -130,7 +161,7 @@ export const DynamicSliderPanel: React.FC = () => {
                 : '...'}
             </div>
             <p className="text-[11px] text-neutral-500">
-              Ganho anualizado estimado pela modulação das alavancas
+              Ganho anualizado efetivo (iniciativas rejeitadas são zeradas)
             </p>
           </div>
 
@@ -146,7 +177,7 @@ export const DynamicSliderPanel: React.FC = () => {
                 : '...'}
             </div>
             <p className="text-[11px] text-neutral-500">
-              Retorno sobre o custo de setup operacional estimado
+              Retorno sobre o custo de setup dinâmico dos esforços das iniciativas ativas
             </p>
           </div>
         </div>

@@ -32,8 +32,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
   const mutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) =>
       api.updateInitiativeStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['prioritization-latest'] });
+      queryClient.invalidateQueries({ queryKey: ['simulator-levers'] });
+      if (initiative && updated) {
+        initiative.approval_status = updated.approval_status;
+      }
       onStatusUpdated?.();
     },
   });

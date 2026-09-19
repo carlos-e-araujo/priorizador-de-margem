@@ -90,10 +90,18 @@ export const KpiCard: React.FC<KpiCardProps> = ({ card }) => {
       </div>
 
       {card.subtitle && (
-        <div className="mt-4 pt-3 border-t border-neutral-800/80">
-          <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2" title={card.subtitle}>
+        <div className="mt-4 pt-3 border-t border-neutral-800/80 flex items-start justify-between gap-3">
+          <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 flex-1" title={card.subtitle}>
             {card.subtitle}
           </p>
+          {(card.status === 'critical' || card.status === 'warning') && (
+            <span
+              className="shrink-0 inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap"
+              title="Esta anomalia determinística é mapeada diretamente na Esteira de Priorização e no Simulador de Sensibilidade"
+            >
+              ⚡ Alavanca Ativa
+            </span>
+          )}
         </div>
       )}
     </div>

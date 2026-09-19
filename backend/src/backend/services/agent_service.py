@@ -199,6 +199,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
         "risk_level": risk_cx,
         "horizon_days": horiz_cx,
         "requires_human_approval": False,
+        "kpi_origin_id": "gargalo_suporte_principal",
     })
 
     # 2. Análise Dinâmica de Margem Comercial e Canais Deficitários
@@ -232,6 +233,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
         "risk_level": 2,
         "horizon_days": 30,
         "requires_human_approval": True,
+        "kpi_origin_id": "dreno_comercial_mc_negativa",
     })
 
     # 3. Análise Dinâmica de Devoluções e Frete Reverso
@@ -272,6 +274,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
         "risk_level": risk_ops,
         "horizon_days": horiz_ops,
         "requires_human_approval": False,
+        "kpi_origin_id": "gargalo_devolucoes",
     })
 
     # 4. Análise Dinâmica de Risco de Ruptura e Estoque
@@ -291,6 +294,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
         "risk_level": 2,
         "horizon_days": 90,
         "requires_human_approval": True,
+        "kpi_origin_id": "vulnerabilidade_estoque",
     })
 
     for init in initiatives:
@@ -585,6 +589,14 @@ Estrutura:
         score = calculate_priority_score(impact_brl, effort, risk, horizon)
         req_approval = bool(item.get("requires_human_approval", False))
 
+        pilar_to_kpi = {
+            "CX": "gargalo_suporte_principal",
+            "Comercial": "dreno_comercial_mc_negativa",
+            "Operações": "gargalo_devolucoes",
+            "Estoque": "vulnerabilidade_estoque",
+        }
+        kpi_origin = item.get("kpi_origin_id") or pilar_to_kpi.get(pilar, "gargalo_operacional_geral")
+
         final_inits.append(
             {
                 "title": title,
@@ -599,6 +611,7 @@ Estrutura:
                 "priority_score": score,
                 "requires_human_approval": req_approval,
                 "approval_status": "PENDING",
+                "kpi_origin_id": kpi_origin,
             }
         )
 
@@ -706,6 +719,7 @@ def save_to_db_node(state: AgentState) -> Dict[str, Any]:
                 priority_score=init_data["priority_score"],
                 requires_human_approval=init_data["requires_human_approval"],
                 approval_status="PENDING",
+                kpi_origin_id=init_data.get("kpi_origin_id"),
             )
             session.add(initiative)
 
@@ -841,6 +855,7 @@ def run_prioritization_cycle(force_refresh: bool = False) -> Dict[str, Any]:
                     "priority_score": i.priority_score,
                     "requires_human_approval": i.requires_human_approval,
                     "approval_status": i.approval_status,
+                    "kpi_origin_id": i.kpi_origin_id,
                 }
                 for i in init_objs
             ],
@@ -890,6 +905,7 @@ def get_latest_prioritization_run() -> Optional[Dict[str, Any]]:
                     "priority_score": i.priority_score,
                     "requires_human_approval": i.requires_human_approval,
                     "approval_status": i.approval_status,
+                    "kpi_origin_id": i.kpi_origin_id,
                 }
                 for i in init_objs
             ],
@@ -925,4 +941,5 @@ def update_initiative_status(initiative_id: int, status: str) -> Optional[Dict[s
             "priority_score": init.priority_score,
             "requires_human_approval": init.requires_human_approval,
             "approval_status": init.approval_status,
+            "kpi_origin_id": init.kpi_origin_id,
         }

@@ -21,6 +21,8 @@ import {
   Clock,
   ChevronRight,
   Filter,
+  Target,
+  X,
 } from 'lucide-react';
 import { api } from '../services/api';
 import type { InitiativeResponse, HorizonDays } from '../types';
@@ -35,6 +37,7 @@ export const PrioritizationTable: React.FC = () => {
   const [selectedInitiative, setSelectedInitiative] = useState<InitiativeResponse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
 
   // Consulta do último ciclo de priorização gravado
   const { data: runData, isLoading, isError, error, isFetching } = useQuery({
@@ -63,6 +66,20 @@ export const PrioritizationTable: React.FC = () => {
     onSettled: () => {
       setApprovingId(null);
       queryClient.invalidateQueries({ queryKey: ['prioritization-latest'] });
+      queryClient.invalidateQueries({ queryKey: ['simulator-levers'] });
+    },
+  });
+
+  // Mutação para rejeição rápida na linha da tabela
+  const rejectMutation = useMutation({
+    mutationFn: (id: number) => api.updateInitiativeStatus(id, 'REJECTED'),
+    onMutate: (id) => {
+      setRejectingId(id);
+    },
+    onSettled: () => {
+      setRejectingId(null);
+      queryClient.invalidateQueries({ queryKey: ['prioritization-latest'] });
+      queryClient.invalidateQueries({ queryKey: ['simulator-levers'] });
     },
   });
 
@@ -136,14 +153,27 @@ export const PrioritizationTable: React.FC = () => {
         header: () => <span className="font-semibold text-neutral-300">Iniciativa & Pilar</span>,
         cell: (info) => {
           const row = info.row.original;
+
+          const getKpiOriginLabel = (originId?: string | null, pilar?: string) => {
+            if (originId === 'gargalo_suporte_principal' || pilar === 'CX') return 'Atendimento WISMO';
+            if (originId === 'dreno_comercial_mc_negativa' || pilar === 'Comercial') return 'Margem Negativa';
+            if (originId === 'gargalo_devolucoes' || pilar === 'Operações') return 'Frete Reverso';
+            if (originId === 'vulnerabilidade_estoque' || pilar === 'Estoque') return 'Ruptura Estoque';
+            return 'Diagnóstico Geral';
+          };
+
           return (
             <div className="max-w-xs sm:max-w-sm space-y-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
                   {row.pilar}
                 </span>
                 <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800">
                   {row.horizon_days}d
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20" title="Card de anomalia correlacionado no Diagnóstico">
+                  <Target className="w-2.5 h-2.5 text-cyan-400" />
+                  Alvo: {getKpiOriginLabel(row.kpi_origin_id, row.pilar)}
                 </span>
                 {row.requires_human_approval && (
                   <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -228,28 +258,41 @@ export const PrioritizationTable: React.FC = () => {
           const isApproved = row.approval_status === 'APPROVED';
           const isRejected = row.approval_status === 'REJECTED';
           const isPendingCurrent = approvingId === row.id;
+          const isRejectingCurrent = rejectingId === row.id;
 
           return (
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-1.5">
               {isApproved ? (
                 <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                   <Check className="w-3.5 h-3.5" />
-                  Aprovada
+                  Homologada
                 </span>
               ) : isRejected ? (
                 <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                  <X className="w-3.5 h-3.5" />
                   Rejeitada
                 </span>
               ) : (
-                <button
-                  onClick={() => approveMutation.mutate(row.id)}
-                  disabled={isPendingCurrent}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-xs font-semibold text-white transition disabled:opacity-50 flex items-center gap-1 shadow-sm"
-                  title="Aprovação rápida da iniciativa"
-                >
-                  <Check className="w-3 h-3" />
-                  {isPendingCurrent ? '...' : 'Aprovar'}
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => approveMutation.mutate(row.id)}
+                    disabled={isPendingCurrent || isRejectingCurrent}
+                    className="px-2 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-xs font-semibold text-white transition disabled:opacity-50 flex items-center gap-0.5 shadow-sm"
+                    title="Homologar iniciativa"
+                  >
+                    <Check className="w-3 h-3" />
+                    {isPendingCurrent ? '...' : 'Aprovar'}
+                  </button>
+                  <button
+                    onClick={() => rejectMutation.mutate(row.id)}
+                    disabled={isPendingCurrent || isRejectingCurrent}
+                    className="px-2 py-1 rounded-lg bg-neutral-800 hover:bg-rose-500/20 hover:text-rose-300 text-xs font-medium text-neutral-400 border border-neutral-700/60 transition disabled:opacity-50 flex items-center gap-0.5"
+                    title="Rejeitar iniciativa"
+                  >
+                    <X className="w-3 h-3" />
+                    {isRejectingCurrent ? '...' : 'Rejeitar'}
+                  </button>
+                </div>
               )}
 
               <button
@@ -267,7 +310,7 @@ export const PrioritizationTable: React.FC = () => {
         },
       }),
     ],
-    [approvingId, approveMutation, maxScore]
+    [approvingId, rejectingId, approveMutation, rejectMutation, maxScore]
   );
 
   const table = useReactTable({

@@ -20,6 +20,7 @@ class InitiativeResponse(BaseModel):
     priority_score: float
     requires_human_approval: bool
     approval_status: str = Field(default="PENDING")
+    kpi_origin_id: str | None = Field(default=None, description="Identificador do card/anomalia de origem")
 
 
 class PrioritizationRunResponse(BaseModel):

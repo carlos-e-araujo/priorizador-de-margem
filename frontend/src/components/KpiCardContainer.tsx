@@ -47,6 +47,17 @@ export const KpiCardContainer: React.FC = () => {
         </div>
       </div>
 
+      {/* Faixa de Linhagem de Dados e Decisão Executiva */}
+      <div className="px-3.5 py-2 rounded-lg bg-neutral-900/60 border border-neutral-800/80 text-[11px] text-neutral-400 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span><strong>Fluxo de Decisão Conectado:</strong> Cada anomalia crítica diagnosticada abaixo é investigada pelos especialistas da <strong>Esteira Executiva</strong> e modulada no <strong>Simulador de Sensibilidade</strong>.</span>
+        </span>
+        <span className="hidden sm:inline font-mono text-[10px] text-neutral-400 shrink-0">
+          Diagnóstico ➔ Esteira ➔ Simulador
+        </span>
+      </div>
+
       {/* Grid de Cards ou Skeletons (2 colunas para melhor leitura e visualização executiva) */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

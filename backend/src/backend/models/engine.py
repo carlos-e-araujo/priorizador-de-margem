@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.models.dataroom import Base
@@ -34,5 +35,6 @@ class Initiative(Base):
     priority_score: Mapped[float] = mapped_column(Float)
     requires_human_approval: Mapped[bool] = mapped_column(Boolean, default=False)
     approval_status: Mapped[str] = mapped_column(String(20), default="PENDING")
+    kpi_origin_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     run: Mapped["PrioritizationRun"] = relationship("PrioritizationRun", back_populates="initiatives")
