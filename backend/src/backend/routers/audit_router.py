@@ -17,6 +17,7 @@ from backend.services.agent_tools import (
     query_negative_margin_summary,
     query_returns_by_category,
     query_stockout_risks,
+    query_top_support_issues,
     query_wismo_tickets_summary,
 )
 from backend.services.kpi_service import format_currency_brl, get_kpis_summary
@@ -38,9 +39,9 @@ def _collect_sql_evidences() -> list[SqlEvidence]:
         data_ret = []
 
     try:
-        data_wismo = json.loads(query_wismo_tickets_summary.invoke({}))
+        data_atend = json.loads(query_top_support_issues.invoke({}))
     except Exception:
-        data_wismo = {}
+        data_atend = {}
 
     try:
         data_stock = json.loads(query_stockout_risks.invoke({}))
@@ -51,25 +52,25 @@ def _collect_sql_evidences() -> list[SqlEvidence]:
         SqlEvidence(
             tool_name="query_negative_margin_summary",
             target_table="vendas",
-            query_description="Identificação de transações deficitárias (mc_negativa = True), receita líquida e prejuízo total",
+            query_description="Identificação de transações deficitárias (mc_negativa = True), receita líquida, prejuízo total e canais afetados",
             result_data=data_neg,
         ),
         SqlEvidence(
             tool_name="query_returns_by_category",
             target_table="vendas",
-            query_description="Taxa de devolução e montante de frete reverso perdido agrupados por categoria de produto",
+            query_description="Taxa de devolução, frete reverso perdido por categoria e principais motivos de devolução",
             result_data=data_ret,
         ),
         SqlEvidence(
-            tool_name="query_wismo_tickets_summary",
+            tool_name="query_top_support_issues",
             target_table="atendimento",
-            query_description="Volumetria e custo operacional de tickets com status 'Onde está meu pedido?' (is_wismo = True)",
-            result_data=data_wismo,
+            query_description="Volumetria, custos operacionais, CSAT e amostras reais das maiores queixas de clientes por categoria",
+            result_data=data_atend,
         ),
         SqlEvidence(
             tool_name="query_stockout_risks",
             target_table="estoque",
-            query_description="SKUs em iminência de ruptura (em_risco_ruptura = True) e capital imobilizado a custo",
+            query_description="SKUs e categorias com maior vulnerabilidade de ruptura (em_risco_ruptura = True) e capital imobilizado",
             result_data=data_stock,
         ),
     ]

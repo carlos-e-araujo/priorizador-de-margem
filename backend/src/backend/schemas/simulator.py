@@ -31,7 +31,7 @@ class SimulatorRunResponse(BaseModel):
     """Resultado da simulação determinística de impacto financeiro."""
 
     delta_ebitda_brl: float = Field(..., description="Total recalculado de ganho anual em EBITDA")
-    formatted_delta_ebitda: str = Field(..., description="Total de ganho formatado em moeda (ex: 'R$ 485.200,00')")
+    formatted_delta_ebitda: str = Field("", description="Total de ganho formatado em moeda (ex: 'R$ 485.200,00')")
     payback_months: float = Field(..., description="Tempo estimado de retorno do investimento em meses")
-    impact_by_lever: dict[str, float] = Field(..., description="Detalhamento financeiro por alavanca { lever_id: ganho_brl }")
+    impact_by_lever: dict[str, float] = Field(default_factory=dict, description="Detalhamento financeiro por alavanca { lever_id: ganho_brl }")
     details_by_lever: list[dict] = Field(default_factory=list, description="Detalhamento estruturado com títulos e ganhos")

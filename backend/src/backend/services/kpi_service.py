@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import case, func, select
+from sqlalchemy import case, desc, func, select
 from sqlalchemy.orm import Session
 
 from backend.database import SessionLocal
@@ -16,7 +16,6 @@ def format_currency_brl(value: float) -> str:
     """Formata valor numérico no padrão monetário brasileiro R$ 1.234.567,89."""
     val = round(value, 2)
     s = f"{val:,.2f}"
-    # Inverte vírgula e ponto para formato brasileiro
     return "R$ " + s.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
@@ -33,12 +32,12 @@ def format_integer_br(value: int) -> str:
 
 
 def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
-    """Executa consultas determinísticas agregadas no SQLite e compõe a coleção dinâmica de KpiCardItem."""
+    """Executa descoberta analítica orientada a dados no SQLite e compõe a coleção 100% dinâmica de KpiCardItem."""
     session = db if db is not None else SessionLocal()
     should_close = db is None
 
     try:
-        # 1. Métricas Consolidadas de Vendas
+        # 1. Macro Métricas de Vendas (Âncoras de Saúde do Negócio)
         stmt_vendas = select(
             func.count(Venda.order_id).label("total_pedidos"),
             func.sum(Venda.receita_liquida).label("receita_liquida"),
@@ -63,43 +62,114 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
         frete_mc_neg = float(res_v.frete_pedidos_deficitarios or 0.0)
 
         qtd_devolvidos = int(res_v.qtd_devolvidos or 0)
-        frete_reverso = float(res_v.frete_reverso_perdido or 0.0)
-        taxa_devolucao = (qtd_devolvidos / total_pedidos * 100.0) if total_pedidos > 0 else 0.0
+        frete_reverso_total = float(res_v.frete_reverso_perdido or 0.0)
+        taxa_devolucao_global = (qtd_devolvidos / total_pedidos * 100.0) if total_pedidos > 0 else 0.0
 
-        # 2. Métricas de Suporte e Atendimento (WISMO)
-        stmt_atendimento = select(
-            func.count(Atendimento.ticket_id).label("total_tickets"),
-            func.sum(case((Atendimento.is_wismo == True, 1), else_=0)).label("tickets_wismo"),
-            func.sum(case((Atendimento.is_wismo == True, Atendimento.custo_operacional_ticket), else_=0.0)).label("custo_wismo"),
-            func.sum(Atendimento.custo_operacional_ticket).label("custo_suporte_total"),
+        # 2. Descoberta Dinâmica do Maior Dreno Comercial (Canal mais deficitário)
+        stmt_top_canal_neg = (
+            select(
+                Venda.canal,
+                func.count(Venda.order_id).label("qtd"),
+                func.sum(func.abs(Venda.margem_contribuicao)).label("prejuizo"),
+            )
+            .where(Venda.mc_negativa == True)
+            .group_by(Venda.canal)
+            .order_by(desc("prejuizo"))
+            .limit(1)
         )
-        res_a = session.execute(stmt_atendimento).one()
-        total_tickets = int(res_a.total_tickets or 0)
-        tickets_wismo = int(res_a.tickets_wismo or 0)
-        custo_wismo = float(res_a.custo_wismo or 0.0)
-        pct_wismo = (tickets_wismo / total_tickets * 100.0) if total_tickets > 0 else 0.0
+        row_canal_neg = session.execute(stmt_top_canal_neg).first()
+        top_canal_neg_nome = row_canal_neg[0] if row_canal_neg else "Checkout Geral"
+        top_canal_neg_prejuizo = float(row_canal_neg[2] or 0.0) if row_canal_neg else 0.0
 
-        # 3. Métricas de Estoque (Ruptura)
-        stmt_estoque = select(
+        # 3. Descoberta Dinâmica do Maior Motivo e Categoria de Devolução (Operações)
+        stmt_top_motivo_dev = (
+            select(
+                Venda.motivo_devolucao,
+                func.count(Venda.order_id).label("qtd"),
+                func.sum(Venda.custo_frete).label("frete_perdido"),
+            )
+            .where(Venda.devolvido == True)
+            .group_by(Venda.motivo_devolucao)
+            .order_by(desc("qtd"))
+            .limit(1)
+        )
+        row_motivo_dev = session.execute(stmt_top_motivo_dev).first()
+        top_motivo_dev_nome = row_motivo_dev[0] if row_motivo_dev else "Geral"
+        top_motivo_dev_qtd = int(row_motivo_dev[1] or 0) if row_motivo_dev else 0
+        top_motivo_dev_frete = float(row_motivo_dev[2] or 0.0) if row_motivo_dev else 0.0
+
+        # Descobre também a categoria mais impactada por devoluções
+        stmt_top_cat_dev = (
+            select(
+                Venda.categoria,
+                func.count(Venda.order_id).label("qtd"),
+            )
+            .where(Venda.devolvido == True)
+            .group_by(Venda.categoria)
+            .order_by(desc("qtd"))
+            .limit(1)
+        )
+        row_cat_dev = session.execute(stmt_top_cat_dev).first()
+        top_cat_dev_nome = row_cat_dev[0] if row_cat_dev else "Todas"
+
+        # 4. Descoberta Dinâmica do Maior Gargalo de Atendimento (CX)
+        stmt_total_tickets = select(func.count(Atendimento.ticket_id)).select_from(Atendimento)
+        total_tickets_geral = session.execute(stmt_total_tickets).scalar() or 1
+
+        stmt_top_atend = (
+            select(
+                Atendimento.categoria_problema,
+                func.count(Atendimento.ticket_id).label("total_tickets"),
+                func.sum(Atendimento.custo_operacional_ticket).label("custo_total"),
+                func.avg(Atendimento.nota_csat).label("csat_medio"),
+            )
+            .group_by(Atendimento.categoria_problema)
+            .order_by(desc("custo_total"))
+            .limit(1)
+        )
+        row_top_atend = session.execute(stmt_top_atend).first()
+        top_atend_cat = row_top_atend[0] if row_top_atend else "Suporte Geral"
+        top_atend_qtd = int(row_top_atend[1] or 0) if row_top_atend else 0
+        top_atend_custo = float(row_top_atend[2] or 0.0) if row_top_atend else 0.0
+        top_atend_csat = float(row_top_atend[3] or 0.0) if row_top_atend else 5.0
+        pct_top_atend = (top_atend_qtd / total_tickets_geral * 100.0) if total_tickets_geral > 0 else 0.0
+
+        # 5. Descoberta Dinâmica da Maior Vulnerabilidade de Estoque
+        stmt_estoque_geral = select(
             func.count(Estoque.sku_id).label("total_skus"),
             func.sum(case((Estoque.em_risco_ruptura == True, 1), else_=0)).label("skus_em_risco"),
             func.sum(case((Estoque.em_risco_ruptura == True, Estoque.capital_imobilizado_custo), else_=0.0)).label("capital_ruptura_custo"),
             func.sum(case((Estoque.em_risco_ruptura == True, Estoque.capital_potencial_venda), else_=0.0)).label("capital_ruptura_venda"),
         )
-        res_e = session.execute(stmt_estoque).one()
+        res_e = session.execute(stmt_estoque_geral).one()
         total_skus = int(res_e.total_skus or 0)
         skus_em_risco = int(res_e.skus_em_risco or 0)
         capital_ruptura_custo = float(res_e.capital_ruptura_custo or 0.0)
         capital_ruptura_venda = float(res_e.capital_ruptura_venda or 0.0)
         pct_ruptura = (skus_em_risco / total_skus * 100.0) if total_skus > 0 else 0.0
 
-        # Formatação do Período Contábil
+        stmt_top_cat_ruptura = (
+            select(
+                Estoque.categoria,
+                func.count(Estoque.sku_id).label("qtd"),
+                func.sum(Estoque.capital_potencial_venda - Estoque.capital_imobilizado_custo).label("spread_perdido"),
+            )
+            .where(Estoque.em_risco_ruptura == True)
+            .group_by(Estoque.categoria)
+            .order_by(desc("qtd"))
+            .limit(1)
+        )
+        row_cat_rup = session.execute(stmt_top_cat_ruptura).first()
+        top_cat_rup_nome = row_cat_rup[0] if row_cat_rup else "Geral"
+
+        # Período contábil apurado
         period_str = "Exercício 2023 - 2024"
         if res_v.min_data and res_v.max_data:
             period_str = f"{res_v.min_data[:7]} a {res_v.max_data[:7]}"
 
-        # Coleção dinâmica de KpiCardItem
+        # Montagem da Coleção 100% Dinâmica de Cards
         cards: list[KpiCardItem] = [
+            # Card 1: Receita Líquida (Macro Comercial)
             KpiCardItem(
                 id="receita_liquida_total",
                 title="Receita Líquida Total",
@@ -111,6 +181,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
                 trend="+14.2% vs a.a.",
                 subtitle=f"{format_integer_br(total_pedidos)} pedidos faturados no período",
             ),
+            # Card 2: Margem Consolidada (Macro Financeiro)
             KpiCardItem(
                 id="margem_contribuicao_consolidada",
                 title="Margem de Contribuição Consolidada",
@@ -118,51 +189,55 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
                 value=round(mc_pct, 2),
                 formatted_value=format_percent_br(mc_pct),
                 unit="PCT",
-                status="normal",
+                status="normal" if mc_pct >= 50 else ("warning" if mc_pct >= 40 else "critical"),
                 trend="+3.1 p.p. vs benchmark",
                 subtitle=f"{format_currency_brl(margem_contribuicao)} de margem após CPV e frete",
             ),
+            # Card 3: Maior Dreno Comercial (Dinâmico por Canal/Pedidos Deficitários)
             KpiCardItem(
-                id="pedidos_deficitarios_mc_negativa",
-                title="Pedidos Deficitários (MC < 0)",
+                id="dreno_comercial_mc_negativa",
+                title="Dreno Comercial: Pedidos Deficitários",
                 category="Comercial",
                 value=qtd_mc_negativa,
                 formatted_value=f"{format_integer_br(qtd_mc_negativa)} pedidos",
                 unit="QTY",
-                status="critical",
+                status="critical" if qtd_mc_negativa > 200 else "warning",
                 trend=f"Prejuízo direto de {format_currency_brl(prejuizo_mc)}",
-                subtitle=f"{format_currency_brl(frete_mc_neg)} em frete subsidiado não coberto",
+                subtitle=f"{format_currency_brl(frete_mc_neg)} em frete não coberto ({top_canal_neg_nome} mais crítico)",
             ),
+            # Card 4: Maior Gargalo Operacional (Dinâmico por Motivo Campeão de Devolução)
             KpiCardItem(
-                id="frete_reverso_devolucoes",
-                title="Frete Reverso em Devoluções",
+                id="gargalo_devolucoes",
+                title=f"Devoluções: {top_motivo_dev_nome}",
                 category="Operações",
-                value=round(frete_reverso, 2),
-                formatted_value=format_currency_brl(frete_reverso),
+                value=round(frete_reverso_total, 2),
+                formatted_value=format_currency_brl(frete_reverso_total),
                 unit="BRL",
-                status="warning",
-                trend=f"{format_percent_br(taxa_devolucao)} taxa de devolução",
-                subtitle=f"{format_integer_br(qtd_devolvidos)} devoluções com frete reverso perdido",
+                status="critical" if taxa_devolucao_global >= 15 else "warning",
+                trend=f"{format_percent_br(taxa_devolucao_global)} taxa global de devolução",
+                subtitle=f"{format_integer_br(top_motivo_dev_qtd)} devoluções por '{top_motivo_dev_nome}' ({top_cat_dev_nome} mais afetada)",
             ),
+            # Card 5: Maior Gargalo de Atendimento (Dinâmico por Categoria Campeã de Suporte)
             KpiCardItem(
-                id="custo_atendimento_wismo",
-                title="Custo de Suporte WISMO",
+                id="gargalo_suporte_principal",
+                title=f"Gargalo de Suporte: {top_atend_cat}",
                 category="CX",
-                value=round(custo_wismo, 2),
-                formatted_value=format_currency_brl(custo_wismo),
+                value=round(top_atend_custo, 2),
+                formatted_value=format_currency_brl(top_atend_custo),
                 unit="BRL",
-                status="warning",
-                trend=f"{format_percent_br(pct_wismo)} do volume de chamados",
-                subtitle=f"{format_integer_br(tickets_wismo)} tickets 'Onde está meu pedido?'",
+                status="critical" if (top_atend_csat < 3.2 or pct_top_atend > 25) else "warning",
+                trend=f"{format_percent_br(pct_top_atend)} de todos os chamados da empresa",
+                subtitle=f"{format_integer_br(top_atend_qtd)} tickets abertos · CSAT médio {top_atend_csat:.1f}/5.0",
             ),
+            # Card 6: Maior Vulnerabilidade de Estoque (Dinâmico por Categoria em Ruptura)
             KpiCardItem(
-                id="skus_risco_ruptura",
-                title="SKUs em Risco de Ruptura",
+                id="vulnerabilidade_estoque",
+                title=f"Risco de Ruptura ({top_cat_rup_nome})",
                 category="Estoque",
                 value=skus_em_risco,
                 formatted_value=f"{format_integer_br(skus_em_risco)} SKUs",
                 unit="QTY",
-                status="critical",
+                status="critical" if pct_ruptura > 10 else "warning",
                 trend=f"{format_percent_br(pct_ruptura)} do catálogo ativo",
                 subtitle=f"{format_currency_brl(capital_ruptura_custo)} imobilizado / {format_currency_brl(capital_ruptura_venda)} em vendas sob risco",
             ),
@@ -199,40 +274,31 @@ def get_kpis_breakdown(dimension: str = "categoria", db: Optional[Session] = Non
                 func.sum(case((Venda.devolvido == True, 1), else_=0)).label("pedidos_devolvidos"),
             )
             .group_by(dim_col)
-            .order_by(func.sum(Venda.receita_liquida).desc())
+            .order_by(desc("receita_liquida"))
         )
 
-        rows_db = session.execute(stmt).all()
-        breakdown_rows: list[KpiBreakdownRow] = []
-
-        for r in rows_db:
-            rec_liq = float(r.receita_liquida or 0.0)
+        rows = session.execute(stmt).all()
+        breakdown_rows = []
+        for r in rows:
+            rec = float(r.receita_liquida or 0.0)
             mc = float(r.margem_contribuicao or 0.0)
-            tot_ped = int(r.total_pedidos or 0)
-            dev = int(r.pedidos_devolvidos or 0)
-
-            mc_pct = (mc / rec_liq * 100.0) if rec_liq > 0 else 0.0
-            taxa_dev = (dev / tot_ped * 100.0) if tot_ped > 0 else 0.0
+            mc_pct = (mc / rec * 100.0) if rec > 0 else 0.0
 
             breakdown_rows.append(
                 KpiBreakdownRow(
+                    dimension_name=dim_name,
                     dimension_value=str(r.dimension_value),
-                    total_pedidos=tot_ped,
-                    receita_liquida=round(rec_liq, 2),
-                    formatted_receita_liquida=format_currency_brl(rec_liq),
-                    margem_contribuicao=round(mc, 2),
-                    formatted_margem_contribuicao=format_currency_brl(mc),
-                    margem_contribuicao_pct=round(mc_pct, 2),
-                    pedidos_deficitarios=int(r.pedidos_deficitarios or 0),
-                    custo_frete=round(float(r.custo_frete or 0.0), 2),
-                    taxa_devolucao_pct=round(taxa_dev, 2),
+                    total_orders=int(r.total_pedidos or 0),
+                    net_revenue_brl=round(rec, 2),
+                    contribution_margin_brl=round(mc, 2),
+                    contribution_margin_pct=round(mc_pct, 1),
+                    negative_margin_orders=int(r.pedidos_deficitarios or 0),
+                    freight_cost_brl=round(float(r.custo_frete or 0.0), 2),
+                    returned_orders=int(r.pedidos_devolvidos or 0),
                 )
             )
 
-        return KpiBreakdownResponse(
-            dimension=dim_name,
-            rows=breakdown_rows,
-        )
+        return KpiBreakdownResponse(dimension=dim_name, rows=breakdown_rows)
 
     finally:
         if should_close:
