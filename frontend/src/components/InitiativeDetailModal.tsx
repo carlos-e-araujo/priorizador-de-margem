@@ -117,8 +117,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
 
         {/* Body */}
         <div className="p-6 space-y-6 max-h-[calc(85vh-180px)] overflow-y-auto">
-          {/* Métricas Principais em Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Métricas Principais em Grid (2 colunas) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="p-3.5 rounded-xl bg-neutral-950/60 border border-neutral-800/80">
               <span className="text-xs text-neutral-400 flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
