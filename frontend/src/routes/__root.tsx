@@ -73,22 +73,6 @@ const RootComponent: React.FC = () => {
               </div>
             </div>
 
-            {/* Badges de Arquitetura & Governança */}
-            <div className="hidden md:flex items-center gap-3 text-xs">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300">
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Dataroom SQLite</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300">
-                <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                <span>LangGraph + EloAgents</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Base Determinística</span>
-              </div>
-            </div>
-
             {/* Ação de Auditoria C-Level */}
             <div className="flex items-center gap-3">
               <button

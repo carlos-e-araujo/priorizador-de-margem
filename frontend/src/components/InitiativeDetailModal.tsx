@@ -220,7 +220,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
                 <XCircle className="w-4 h-4" /> Iniciativa desconsiderada da esteira.
               </span>
             ) : (
-              <span>Clique abaixo para homologar ou declinar a iniciativa.</span>
+              <span>Clique em um botão para homologar ou rejeitar a iniciativa.</span>
             )}
           </div>
 
