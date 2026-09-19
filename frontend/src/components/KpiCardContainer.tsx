@@ -47,10 +47,10 @@ export const KpiCardContainer: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid de Cards ou Skeletons */}
+      {/* Grid de Cards ou Skeletons (2 colunas para melhor leitura e visualização executiva) */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, idx) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 6 }).map((_, idx) => (
             <KpiCardSkeleton key={idx} />
           ))}
         </div>
@@ -73,7 +73,7 @@ export const KpiCardContainer: React.FC = () => {
           </button>
         </div>
       ) : data?.cards && data.cards.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.cards.map((card) => (
             <KpiCard key={card.id} card={card} />
           ))}
