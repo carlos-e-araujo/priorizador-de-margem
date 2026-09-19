@@ -3,6 +3,7 @@
 > **Documento de Concepção, Arquitetura e Engenharia de Produto (Single Source of Truth)**  
 > **Referência do Case:** [00_case_vertice.md](file:///home/carlos/Projects/prototipo_final/docs/00_case_vertice.md) | [01_modulo_c.md](file:///home/carlos/Projects/prototipo_final/docs/01_modulo_c.md)  
 > **Fundamentação Técnica:** [02_eloagents_e_agent_arquitectures.md](file:///home/carlos/Projects/prototipo_final/docs/02_eloagents_e_agent_arquitectures.md) | [03_kpis_e_como_usar.md](file:///home/carlos/Projects/prototipo_final/docs/03_kpis_e_como_usar.md)  
+> **Dados do Case:** Tratados e alocados em `backend/data/` (`vendas_tratado.csv`, `atendimento_tratado.csv`, `estoque_tratado.csv`, `marketing_tratado.csv`, `clientes_tratado.csv`)  
 > **Stack do Protótipo:** Frontend TanStack (React + TanStack Router/Query/Table) · Backend FastAPI + SQLAlchemy · Banco de Dados SQLite (`vertice.db`) · Motor de IA LangGraph + EloAgents (`openai/gemini-3-flash-preview`)  
 > **Público-Alvo da Solução:** Diretoria Executiva da Vértice Retail (CEO, CFO, CMO, COO) — Usuários não técnicos  
 > **Tempo de Demonstração (Pitch):** 60 segundos cronometrados
@@ -21,6 +22,7 @@ O protótipo do **Módulo C (Motor de Priorização de Margem)** foi projetado p
 ### 1.2 O Papel do Módulo C: Descoberta Ativa e Dinâmica
 O Módulo C **não é um dashboard passivo com números estáticos** e **não é um gerador de texto com conselhos pré-fabricados (*hardcoded*)**:
 - **Descoberta Dinâmica de Problemas:** A ferramenta conecta-se diretamente às tabelas do banco relacional SQLite e calcula os indicadores vitais em tempo real via consultas SQL determinísticas.
+- **Ingestão dos Dados Tratados do Case:** O banco SQLite é alimentado a partir dos arquivos tratados em `backend/data/`, garantindo fidelidade contábil e transacional.
 - **Investigação Autônoma por IA:** Ao acionar o motor, agentes inteligentes analisam as bases transacionais utilizando *tools* em Python, diagnosticando onde a margem está sendo consumida e estruturando iniciativas fundamentadas nos dados concretos encontrados.
 - **Algoritmo Determinístico de Priorização:** Cada oportunidade identificada é ranqueada com base em uma fórmula matemática auditável (Impacto em R$, Esforço, Risco e Horizonte de Captura em 30, 60 e 90 dias).
 - **Zero Premissas Fixas:** Nenhum valor financeiro, percentual de devolução ou texto de iniciativa é inserido de forma fixa no código. O comportamento, os números exibidos e as recomendações derivam exclusivamente dos dados presentes no banco de dados e do raciocínio executivo dos agentes.
@@ -138,6 +140,15 @@ flowchart TD
         DB6[("prioritization_runs & initiatives")]
     end
 
+    subgraph CSVs["Arquivos CSV Tratados (backend/data/)"]
+        CSV1["vendas_tratado.csv"]
+        CSV2["marketing_tratado.csv"]
+        CSV3["clientes_tratado.csv"]
+        CSV4["atendimento_tratado.csv"]
+        CSV5["estoque_tratado.csv"]
+    end
+
+    CSVs -->|Carga Inicial via seed.py| Storage
     Frontend <-->|HTTP JSON / REST| Backend
     Backend <-->|SQLAlchemy ORM| Storage
     Backend <-->|Invocação de Grafos de Estado| Intelligence
@@ -149,7 +160,7 @@ flowchart TD
 ## 4. Modelo de Dados Relacional (SQLite & SQLAlchemy)
 
 O banco de dados SQLite armazena duas famílias de tabelas:
-1. **Tabelas do Data Room:** Espelhadas rigorosamente nas colunas especificadas na Seção 5 do [00_case_vertice.md](file:///home/carlos/Projects/prototipo_final/docs/00_case_vertice.md).
+1. **Tabelas do Data Room:** Espelhadas rigorosamente nas colunas dos arquivos CSV tratados do case em `backend/data/`.
 2. **Tabelas de Gestão do Motor:** Armazenam o histórico de execuções geradas dinamicamente pelos agentes, o ranqueamento das iniciativas e o registro de decisões tomadas pela diretoria.
 
 ```mermaid
@@ -161,69 +172,117 @@ erDiagram
     PRIORITIZATION_RUNS ||--o{ INITIATIVES : "gera"
 
     VENDAS {
-        int order_id PK
-        int customer_id FK
-        date data
+        string order_id PK
+        string customer_id FK
+        string sku_id FK
+        string data_pedido
         string canal
         string categoria
         string produto
-        int quantidade
-        float receita
-        float desconto
+        float quantidade
+        float preco_unitario
+        float receita_bruta
+        float desconto_reais
+        float receita_liquida
         float custo_produto
         float custo_frete
-        float margem
+        string metodo_pagamento
+        string status_pagamento
+        float margem_contribuicao
+        float tempo_entrega_real
         boolean devolvido
+        string motivo_devolucao
+        string ano_mes
+        int ano
+        int mes
+        float mc_percentual
+        boolean mc_negativa
     }
 
     MARKETING {
-        int id PK
-        string campanha
+        string campanha_id PK
+        string nome_campanha
         string canal
-        float investimento
+        string categoria_foco
+        string data_inicio
+        string data_fim
+        float investimento_reais
         int impressoes
         int cliques
         int conversoes
+        string atribuicao
+        string status
+        float roas
+        float receita_gerada
         float cac
-        float ticket_medio
-        float margem_media
+        int duracao_dias
+        float ctr_percentual
+        float taxa_conversao_pct
+        float cpc_reais
+        float cpm_reais
+        float roas_calculado
+        float cac_calculado
     }
 
     CLIENTES {
-        int customer_id PK
-        int idade
-        string regiao
-        date primeira_compra
-        int numero_pedidos
-        float receita_total
-        float margem_total
-        string canal_aquisicao
-        int recencia
-        string segmento
+        string customer_id PK
+        string nome_completo
+        string data_nascimento
+        string genero
+        string estado
+        string cidade
+        string nivel_fidelidade
+        string data_cadastro
+        boolean opt_in_newsletter
+        string dispositivo_principal
+        float renda_estimada
+        int total_pedidos_historico
+        float ltv_acumulado
+        string segmento_rfm
+        boolean is_vip
     }
 
     ATENDIMENTO {
-        int ticket_id PK
-        date data
-        string canal
-        string categoria
+        string ticket_id PK
+        string customer_id FK
+        string order_id FK
+        string data_abertura
+        string data_fechamento
+        string canal_entrada
+        string categoria_problema
+        string status_atendimento
         text texto_cliente
-        float tempo_resposta
-        boolean resolvido
-        string sentimento
-        float custo_estimado
+        float nota_csat
+        float tempo_primeira_resposta_minutos
+        float custo_operacional_ticket
+        float tempo_resolucao_horas
+        boolean is_wismo
+        boolean is_elegivel_copiloto_ia
+        string faixa_tempo_resposta
     }
 
     ESTOQUE {
-        string sku PK
+        string sku_id PK
+        string nome_produto
         string categoria
-        int estoque_atual
-        float giro
-        boolean ruptura
-        int dias_sem_estoque
-        string fornecedor
-        int lead_time
+        string subcategoria
+        string fornecedor_id
+        int lead_time_reposicao
         float custo_unitario
+        float preco_venda_sugerido
+        int estoque_fisico
+        int estoque_reservado
+        int estoque_disponivel
+        int ponto_pedido
+        string data_ultima_entrada
+        string status_disponibilidade
+        int shelf_life_dias
+        float volume_m3
+        float capital_imobilizado_custo
+        float capital_potencial_venda
+        float spread_markup_sugerido
+        boolean em_risco_ruptura
+        boolean is_descontinuado
     }
 
     PRIORITIZATION_RUNS {
@@ -255,10 +314,11 @@ erDiagram
 
 ### 4.1 Modelos SQLAlchemy (`backend/src/backend/models/dataroom.py` e `engine.py`)
 
+Aderência exata aos tipos e colunas dos CSVs tratados:
+
 ```python
 # backend/src/backend/models/dataroom.py
-from datetime import date
-from sqlalchemy import Boolean, Date, Float, Integer, String, Text
+from sqlalchemy import Boolean, Float, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -267,73 +327,121 @@ class Base(DeclarativeBase):
 class Venda(Base):
     __tablename__ = "vendas"
 
-    order_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    customer_id: Mapped[int] = mapped_column(Integer, index=True)
-    data: Mapped[date] = mapped_column(Date, index=True)
+    order_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    customer_id: Mapped[str] = mapped_column(String(50), index=True)
+    sku_id: Mapped[str] = mapped_column(String(50), index=True)
+    data_pedido: Mapped[str] = mapped_column(String(30), index=True)
     canal: Mapped[str] = mapped_column(String(50), index=True)
     categoria: Mapped[str] = mapped_column(String(50), index=True)
-    produto: Mapped[str] = mapped_column(String(100))
-    quantidade: Mapped[int] = mapped_column(Integer, default=1)
-    receita: Mapped[float] = mapped_column(Float)
-    desconto: Mapped[float] = mapped_column(Float, default=0.0)
+    produto: Mapped[str] = mapped_column(String(150))
+    quantidade: Mapped[float] = mapped_column(Float, default=1.0)
+    preco_unitario: Mapped[float] = mapped_column(Float)
+    receita_bruta: Mapped[float] = mapped_column(Float)
+    desconto_reais: Mapped[float] = mapped_column(Float, default=0.0)
+    receita_liquida: Mapped[float] = mapped_column(Float)
     custo_produto: Mapped[float] = mapped_column(Float)
     custo_frete: Mapped[float] = mapped_column(Float)
-    margem: Mapped[float] = mapped_column(Float)
+    metodo_pagamento: Mapped[str] = mapped_column(String(50))
+    status_pagamento: Mapped[str] = mapped_column(String(50))
+    margem_contribuicao: Mapped[float] = mapped_column(Float)
+    tempo_entrega_real: Mapped[float] = mapped_column(Float, default=0.0)
     devolvido: Mapped[bool] = mapped_column(Boolean, default=False)
+    motivo_devolucao: Mapped[str] = mapped_column(String(100), default="Não se aplica")
+    ano_mes: Mapped[str] = mapped_column(String(10), index=True)
+    ano: Mapped[int] = mapped_column(Integer, index=True)
+    mes: Mapped[int] = mapped_column(Integer)
+    mc_percentual: Mapped[float] = mapped_column(Float)
+    mc_negativa: Mapped[bool] = mapped_column(Boolean, index=True, default=False)
 
 class Marketing(Base):
     __tablename__ = "marketing"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    campanha: Mapped[str] = mapped_column(String(100))
+    campanha_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    nome_campanha: Mapped[str] = mapped_column(String(100))
     canal: Mapped[str] = mapped_column(String(50), index=True)
-    investimento: Mapped[float] = mapped_column(Float)
+    categoria_foco: Mapped[str] = mapped_column(String(50))
+    data_inicio: Mapped[str] = mapped_column(String(30))
+    data_fim: Mapped[str] = mapped_column(String(30))
+    investimento_reais: Mapped[float] = mapped_column(Float)
     impressoes: Mapped[int] = mapped_column(Integer)
     cliques: Mapped[int] = mapped_column(Integer)
     conversoes: Mapped[int] = mapped_column(Integer)
+    atribuicao: Mapped[str] = mapped_column(String(50))
+    status: Mapped[str] = mapped_column(String(50))
+    roas: Mapped[float] = mapped_column(Float)
+    receita_gerada: Mapped[float] = mapped_column(Float)
     cac: Mapped[float] = mapped_column(Float)
-    ticket_medio: Mapped[float] = mapped_column(Float)
-    margem_media: Mapped[float] = mapped_column(Float)
+    duracao_dias: Mapped[int] = mapped_column(Integer)
+    ctr_percentual: Mapped[float] = mapped_column(Float)
+    taxa_conversao_pct: Mapped[float] = mapped_column(Float)
+    cpc_reais: Mapped[float] = mapped_column(Float)
+    cpm_reais: Mapped[float] = mapped_column(Float)
+    roas_calculado: Mapped[float] = mapped_column(Float)
+    cac_calculado: Mapped[float] = mapped_column(Float)
 
 class Cliente(Base):
     __tablename__ = "clientes"
 
-    customer_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    idade: Mapped[int] = mapped_column(Integer)
-    regiao: Mapped[str] = mapped_column(String(50))
-    primeira_compra: Mapped[date] = mapped_column(Date)
-    numero_pedidos: Mapped[int] = mapped_column(Integer)
-    receita_total: Mapped[float] = mapped_column(Float)
-    margem_total: Mapped[float] = mapped_column(Float)
-    canal_aquisicao: Mapped[str] = mapped_column(String(50))
-    recencia: Mapped[int] = mapped_column(Integer)
-    segmento: Mapped[str] = mapped_column(String(50))
+    customer_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    nome_completo: Mapped[str] = mapped_column(String(150))
+    data_nascimento: Mapped[str] = mapped_column(String(30))
+    genero: Mapped[str] = mapped_column(String(10))
+    estado: Mapped[str] = mapped_column(String(10))
+    cidade: Mapped[str] = mapped_column(String(100))
+    nivel_fidelidade: Mapped[str] = mapped_column(String(50))
+    data_cadastro: Mapped[str] = mapped_column(String(30))
+    opt_in_newsletter: Mapped[bool] = mapped_column(Boolean)
+    dispositivo_principal: Mapped[str] = mapped_column(String(50))
+    renda_estimada: Mapped[float] = mapped_column(Float)
+    total_pedidos_historico: Mapped[int] = mapped_column(Integer)
+    ltv_acumulado: Mapped[float] = mapped_column(Float)
+    segmento_rfm: Mapped[str] = mapped_column(String(50), index=True)
+    is_vip: Mapped[bool] = mapped_column(Boolean)
 
 class Atendimento(Base):
     __tablename__ = "atendimento"
 
-    ticket_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    data: Mapped[date] = mapped_column(Date)
-    canal: Mapped[str] = mapped_column(String(50))
-    categoria: Mapped[str] = mapped_column(String(50), index=True)
+    ticket_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    customer_id: Mapped[str] = mapped_column(String(50), index=True)
+    order_id: Mapped[str] = mapped_column(String(50), index=True)
+    data_abertura: Mapped[str] = mapped_column(String(30))
+    data_fechamento: Mapped[str] = mapped_column(String(30))
+    canal_entrada: Mapped[str] = mapped_column(String(50))
+    categoria_problema: Mapped[str] = mapped_column(String(100), index=True)
+    status_atendimento: Mapped[str] = mapped_column(String(50))
     texto_cliente: Mapped[str] = mapped_column(Text)
-    tempo_resposta: Mapped[float] = mapped_column(Float)
-    resolvido: Mapped[bool] = mapped_column(Boolean)
-    sentimento: Mapped[str] = mapped_column(String(20))
-    custo_estimado: Mapped[float] = mapped_column(Float)
+    nota_csat: Mapped[float] = mapped_column(Float, default=0.0)
+    tempo_primeira_resposta_minutos: Mapped[float] = mapped_column(Float)
+    custo_operacional_ticket: Mapped[float] = mapped_column(Float)
+    tempo_resolucao_horas: Mapped[float] = mapped_column(Float)
+    is_wismo: Mapped[bool] = mapped_column(Boolean, index=True)
+    is_elegivel_copiloto_ia: Mapped[bool] = mapped_column(Boolean)
+    faixa_tempo_resposta: Mapped[str] = mapped_column(String(50))
 
 class Estoque(Base):
     __tablename__ = "estoque"
 
-    sku: Mapped[str] = mapped_column(String(50), primary_key=True)
-    categoria: Mapped[str] = mapped_column(String(50))
-    estoque_atual: Mapped[int] = mapped_column(Integer)
-    giro: Mapped[float] = mapped_column(Float)
-    ruptura: Mapped[bool] = mapped_column(Boolean)
-    dias_sem_estoque: Mapped[int] = mapped_column(Integer)
-    fornecedor: Mapped[str] = mapped_column(String(100))
-    lead_time: Mapped[int] = mapped_column(Integer)
+    sku_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    nome_produto: Mapped[str] = mapped_column(String(150))
+    categoria: Mapped[str] = mapped_column(String(50), index=True)
+    subcategoria: Mapped[str] = mapped_column(String(50))
+    fornecedor_id: Mapped[str] = mapped_column(String(50))
+    lead_time_reposicao: Mapped[int] = mapped_column(Integer)
     custo_unitario: Mapped[float] = mapped_column(Float)
+    preco_venda_sugerido: Mapped[float] = mapped_column(Float)
+    estoque_fisico: Mapped[int] = mapped_column(Integer)
+    estoque_reservado: Mapped[int] = mapped_column(Integer)
+    estoque_disponivel: Mapped[int] = mapped_column(Integer)
+    ponto_pedido: Mapped[int] = mapped_column(Integer)
+    data_ultima_entrada: Mapped[str] = mapped_column(String(30))
+    status_disponibilidade: Mapped[str] = mapped_column(String(50))
+    shelf_life_dias: Mapped[int] = mapped_column(Integer)
+    volume_m3: Mapped[float] = mapped_column(Float)
+    capital_imobilizado_custo: Mapped[float] = mapped_column(Float)
+    capital_potencial_venda: Mapped[float] = mapped_column(Float)
+    spread_markup_sugerido: Mapped[float] = mapped_column(Float)
+    em_risco_ruptura: Mapped[bool] = mapped_column(Boolean, index=True)
+    is_descontinuado: Mapped[bool] = mapped_column(Boolean)
 ```
 
 ```python
@@ -394,7 +502,7 @@ class KpiSummaryResponse(BaseModel):
     receita_liquida_total: float = Field(..., description="Receita líquida total calculada via SQL")
     margem_contribuicao_total: float = Field(..., description="Margem de contribuição absoluta em R$")
     margem_contribuicao_pct: float = Field(..., description="Percentual de margem de contribuição sobre a receita líquida")
-    pedidos_margem_negativa_qtd: int = Field(..., description="Volume de pedidos onde MC < 0")
+    pedidos_margem_negativa_qtd: int = Field(..., description="Volume de pedidos onde mc_negativa é True")
     prejuizo_margem_negativa_brl: float = Field(..., description="Montante total de perda em pedidos com MC < 0")
     custo_logistica_reversa_brl: float = Field(..., description="Custo de frete em itens devolvidos")
     custo_atendimento_total_brl: float = Field(..., description="Custo operacional de chamados de suporte")
@@ -513,9 +621,9 @@ llm = ChatLiteLLM(
 )
 ```
 
-### 6.4 Implementação das Tools Determinísticas (`backend/src/backend/services/agent_tools.py`)
+### 6.4 Implementação das Tools Determinísticas Conectadas às Colunas Reais (`backend/src/backend/services/agent_tools.py`)
 
-As ferramentas conectam os agentes diretamente ao banco SQLite via SQLAlchemy e retornam strings JSON:
+As ferramentas conectam os agentes diretamente ao banco SQLite via SQLAlchemy e utilizam as colunas exatas dos dados tratados:
 
 ```python
 import json
@@ -526,14 +634,14 @@ from backend.models.dataroom import Atendimento, Estoque, Venda
 
 @tool
 def query_negative_margin_summary() -> str:
-    """Calcula o volume de pedidos com margem negativa (MC < 0), receita perdida e custo total de frete."""
+    """Calcula o volume de pedidos com margem negativa (mc_negativa = True), receita perdida e custo total de frete."""
     with SessionLocal() as session:
         stmt = select(
             func.count(Venda.order_id).label("total_pedidos"),
-            func.sum(Venda.receita - Venda.desconto).label("receita_liquida"),
+            func.sum(Venda.receita_liquida).label("receita_liquida"),
             func.sum(Venda.custo_frete).label("custo_frete_total"),
-            func.sum(func.abs(Venda.margem)).label("prejuizo_total")
-        ).where(Venda.margem < 0)
+            func.sum(func.abs(Venda.margem_contribuicao)).label("prejuizo_total")
+        ).where(Venda.mc_negativa == True)
         res = session.execute(stmt).one()
         return json.dumps({
             "pedidos_negativos": res.total_pedidos or 0,
@@ -543,7 +651,7 @@ def query_negative_margin_summary() -> str:
 
 @tool
 def query_returns_by_category() -> str:
-    """Calcula a taxa e o custo financeiro de devoluções agrupadas por categoria de produto."""
+    """Calcula a taxa e o custo financeiro de devoluções agrupadas por categoria e motivo de devolução."""
     with SessionLocal() as session:
         stmt = select(
             Venda.categoria,
@@ -566,12 +674,12 @@ def query_returns_by_category() -> str:
 
 @tool
 def query_wismo_tickets_summary() -> str:
-    """Calcula o volume e custo de tickets de suporte relacionados a 'WISMO' (onde está meu pedido / atraso)."""
+    """Calcula o volume e custo operacional total de chamados de suporte do tipo WISMO (is_wismo = True)."""
     with SessionLocal() as session:
         stmt = select(
             func.count(Atendimento.ticket_id).label("total_tickets"),
-            func.sum(Atendimento.custo_estimado).label("custo_total")
-        ).where(Atendimento.categoria.ilike("%entrega%") | Atendimento.categoria.ilike("%rastreio%") | Atendimento.texto_cliente.ilike("%onde está%"))
+            func.sum(Atendimento.custo_operacional_ticket).label("custo_total")
+        ).where(Atendimento.is_wismo == True)
         res = session.execute(stmt).one()
         return json.dumps({
             "tickets_wismo_qtd": res.total_tickets or 0,
@@ -580,21 +688,24 @@ def query_wismo_tickets_summary() -> str:
 
 @tool
 def query_stockout_risks() -> str:
-    """Identifica SKUs com dias sem estoque (ruptura) e produtos sem giro com capital parado."""
+    """Identifica SKUs em risco de ruptura (em_risco_ruptura = True) e o montante de capital imobilizado."""
     with SessionLocal() as session:
         stmt = select(
-            Estoque.sku,
+            Estoque.sku_id,
+            Estoque.nome_produto,
             Estoque.categoria,
-            Estoque.dias_sem_estoque,
-            Estoque.estoque_atual,
-            Estoque.custo_unitario
-        ).where((Estoque.ruptura == True) | (Estoque.dias_sem_estoque > 15)).limit(10)
+            Estoque.lead_time_reposicao,
+            Estoque.estoque_disponivel,
+            Estoque.capital_imobilizado_custo
+        ).where(Estoque.em_risco_ruptura == True).limit(10)
         rows = session.execute(stmt).all()
         data = [{
-            "sku": r.sku,
+            "sku_id": r.sku_id,
+            "nome_produto": r.nome_produto,
             "categoria": r.categoria,
-            "dias_sem_estoque": r.dias_sem_estoque,
-            "capital_imobilizado": round(float(r.estoque_atual * r.custo_unitario), 2)
+            "lead_time": r.lead_time_reposicao,
+            "estoque_disponivel": r.estoque_disponivel,
+            "capital_imobilizado_brl": round(float(r.capital_imobilizado_custo or 0), 2)
         } for r in rows]
         return json.dumps(data, ensure_ascii=False)
 ```
@@ -610,7 +721,7 @@ Divida a investigação focando em identificar onde a margem está sendo consumi
 
 SYSTEM_COMMERCIAL = """
 Você é o Especialista Comercial e de Pricing da Vértice Retail.
-Suas ferramentas analisam vendas, pedidos deficitários (MC < 0) e políticas promocionais.
+Suas ferramentas analisam vendas, pedidos deficitários (mc_negativa = True) e descontos concedidos.
 REGRAS:
 - Use SEMPRE as tools disponíveis para extrair fatos observados. Não invente números.
 - Identifique a causa-raiz de transações com margem negativa.
@@ -622,7 +733,7 @@ Você é o Especialista de Operações e Logística da Vértice Retail.
 Suas ferramentas analisam devoluções de produtos, frete reverso e rupturas de estoque.
 REGRAS:
 - Baseie suas afirmações nas métricas das tools.
-- Diferencie problemas causados por erro de tamanho/modelagem de atrasos de transportadora.
+- Diferencie problemas causados por devolução e frete reverso de riscos de ruptura de estoque.
 - Proponha ações práticas com horizonte de implementação estimado (30, 60 ou 90 dias).
 """
 
@@ -630,7 +741,7 @@ SYSTEM_CX = """
 Você é o Especialista de Customer Experience da Vértice Retail.
 Suas ferramentas analisam tickets de atendimento e chamados WISMO ('Onde está meu pedido?').
 REGRAS:
-- Quantifique o custo de suporte que decorre de atritos logísticos.
+- Quantifique o custo de suporte que decorre de atritos logísticos (is_wismo = True).
 - Proponha automações e melhorias de comunicação proativa.
 """
 
@@ -743,7 +854,7 @@ flowchart TD
         subgraph TopBar["Topo: Diagnóstico Cardinal em Tempo Real (00s - 15s)"]
             K1["Stat Card 1: Receita Líquida Total<br/>(Calculada via SQL no SQLite)"]
             K2["Stat Card 2: Margem de Contribuição %<br/>(Apurada com comparação dinâmica vs. meta)"]
-            K3["Stat Card 3: Vazamento de Margem<br/>(Perda acumulada em pedidos com MC < 0)"]
+            K3["Stat Card 3: Vazamento de Margem<br/>(Perda acumulada em pedidos com mc_negativa)"]
             K4["Stat Card 4: Fricção Operacional Pós-Venda<br/>(Logística reversa + custos de atendimento)"]
         end
 
@@ -766,10 +877,10 @@ flowchart TD
 
 #### 1. Top Bar & Hero KPI Cards (Diagnóstico Imediato)
 Exibe no topo de todas as páginas 4 cartões com leitura instantânea:
-- **Receita Líquida:** Somatório dinâmico de `receita - desconto` do período consultado.
-- **Margem de Contribuição Média (%):** Relação percentual calculada via SQL (`margem / receita líquida`), sinalizando visualmente desvios em relação à meta.
-- **Hemorragia de Margem ($MC < 0$):** Identificação automática do volume e valor financeiro de pedidos deficitários gerados por excesso de desconto e frete sem valor mínimo.
-- **Custos de Fricção Pós-Venda:** Consolidação dos custos operacionais decorrentes de devoluções e chamados de suporte ao cliente.
+- **Receita Líquida:** Somatório dinâmico de `receita_liquida` do período consultado.
+- **Margem de Contribuição Média (%):** Relação percentual calculada via SQL (`margem_contribuicao / receita_liquida`), sinalizando visualmente desvios em relação à meta.
+- **Hemorragia de Margem ($MC < 0$):** Identificação automática do volume e valor financeiro de pedidos deficitários (`mc_negativa = True`).
+- **Custos de Fricção Pós-Venda:** Consolidação dos custos operacionais decorrentes de devoluções (`devolvido = True`) e chamados de suporte ao cliente (`custo_operacional_ticket`).
 
 #### 2. Tabela de Priorização (O Motor em Ação)
 - **Barra de Controle Superior:**
@@ -795,7 +906,7 @@ Acionada por botão de transparência no rodapé:
 
 ---
 
-## 8. Estrutura de Diretórios e Carga de Dados Inicial
+## 8. Estrutura de Diretórios e Carga dos Dados dos CSVs
 
 ### 8.1 Estrutura de Pastas do Repositório
 
@@ -811,12 +922,18 @@ prototipo_final/
 │   ├── pyproject.toml
 │   ├── .env.example
 │   ├── vertice.db
+│   ├── data/                           # Arquivos CSV tratados do case
+│   │   ├── atendimento_tratado.csv
+│   │   ├── clientes_tratado.csv
+│   │   ├── estoque_tratado.csv
+│   │   ├── marketing_tratado.csv
+│   │   └── vendas_tratado.csv
 │   └── src/
 │       └── backend/
 │           ├── main.py
 │           ├── config.py
 │           ├── database.py
-│           ├── seed.py                 # Script de carga inicial para desenvolvimento local
+│           ├── seed.py                 # Script de carga dos CSVs para o SQLite
 │           ├── models/
 │           │   ├── __init__.py
 │           │   ├── dataroom.py
@@ -857,102 +974,53 @@ prototipo_final/
             └── api.ts
 ```
 
-### 8.2 Script de Carga Inicial para Desenvolvimento (`backend/src/backend/seed.py`)
+### 8.2 Script de Carga dos Dados dos CSVs (`backend/src/backend/seed.py`)
 
-Para permitir que o time de desenvolvimento teste a aplicação imediatamente com SQLite (mesmo antes da chegada dos CSVs externos finais), este script popula dados coerentes com o case:
+O script abaixo lê os dados tratados dos arquivos CSV em `backend/data/` e popula as tabelas do SQLite sem gerar nenhum dado inventado:
 
 ```python
-from datetime import date, timedelta
-import random
-from backend.database import SessionLocal, engine
-from backend.models.dataroom import Atendimento, Base, Cliente, Estoque, Marketing, Venda
+import os
+from pathlib import Path
+import pandas as pd
+from backend.database import engine
+from backend.models.dataroom import Base
+
+DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 
 def seed_database():
+    """Carrega os dados dos arquivos CSV tratados diretamente para o banco SQLite."""
+    print("Criando tabelas no banco SQLite se não existirem...")
     Base.metadata.create_all(bind=engine)
-    with SessionLocal() as session:
-        if session.query(Venda).first():
-            print("Banco já populado.")
-            return
 
-        print("Populando banco SQLite com dados do Data Room...")
-        # 1. Clientes
-        for i in range(1, 101):
-            session.add(Cliente(
-                customer_id=i,
-                idade=random.randint(18, 45),
-                regiao=random.choice(["Sudeste", "Sul", "Nordeste", "Centro-Oeste"]),
-                primeira_compra=date(2023, 1, 10),
-                numero_pedidos=random.randint(1, 8),
-                receita_total=random.uniform(200, 3000),
-                margem_total=random.uniform(50, 900),
-                canal_aquisicao=random.choice(["Instagram", "Google Ads", "Influenciadores", "Direto"]),
-                recencia=random.randint(5, 120),
-                segmento=random.choice(["Promocional", "Recorrente", "VIP", "Novo"])
-            ))
+    csv_mapping = {
+        "clientes": "clientes_tratado.csv",
+        "estoque": "estoque_tratado.csv",
+        "marketing": "marketing_tratado.csv",
+        "vendas": "vendas_tratado.csv",
+        "atendimento": "atendimento_tratado.csv",
+    }
 
-        # 2. Vendas (gerando pedidos lucrativos e pedidos com MC < 0)
-        categorias = ["Moda Feminina", "Moda Masculina", "Beleza", "Lifestyle", "Calçados"]
-        canais = ["Site Próprio", "App", "Marketplace", "Influenciadores"]
-        for o in range(1, 501):
-            cat = random.choice(categorias)
-            rec = random.uniform(80, 450)
-            desc = random.uniform(0, 120) if random.random() > 0.4 else 0.0
-            custo_prod = rec * random.uniform(0.35, 0.55)
-            # Alguns pedidos recebem frete caro gerando MC negativa
-            custo_frete = random.uniform(18, 65)
-            rec_liq = rec - desc
-            margem = rec_liq - custo_prod - custo_frete
-            devolvido = (random.random() < 0.22) if cat in ["Moda Feminina", "Calçados"] else (random.random() < 0.08)
+    with engine.connect() as conn:
+        for table_name, filename in csv_mapping.items():
+            csv_path = DATA_DIR / filename
+            if not csv_path.exists():
+                print(f"Aviso: Arquivo {csv_path} não encontrado. Pulando...")
+                continue
 
-            session.add(Venda(
-                order_id=o,
-                customer_id=random.randint(1, 100),
-                data=date(2023, 1, 1) + timedelta(days=random.randint(0, 360)),
-                canal=random.choice(canais),
-                categoria=cat,
-                produto=f"Item {cat} #{random.randint(10, 99)}",
-                quantidade=1,
-                receita=round(rec, 2),
-                desconto=round(desc, 2),
-                custo_produto=round(custo_prod, 2),
-                custo_frete=round(custo_frete, 2),
-                margem=round(margem, 2),
-                devolvido=devolvido
-            ))
+            print(f"Lendo {filename} e carregando na tabela '{table_name}'...")
+            df = pd.read_csv(csv_path)
 
-        # 3. Atendimento
-        temas = ["Onde está meu pedido?", "Troca de tamanho", "Atraso na entrega", "Dúvida sobre produto"]
-        for t in range(1, 151):
-            tema = random.choice(temas)
-            session.add(Atendimento(
-                ticket_id=t,
-                data=date(2023, 2, 1) + timedelta(days=random.randint(0, 300)),
-                canal=random.choice(["WhatsApp", "Chatbot", "E-mail"]),
-                categoria="Entrega" if "pedido" in tema or "Atraso" in tema else "Troca",
-                texto_cliente=tema,
-                tempo_resposta=round(random.uniform(0.5, 12.0), 1),
-                resolvido=True,
-                sentimento="Negativo" if "Atraso" in tema else "Neutro",
-                custo_estimado=round(random.uniform(6.50, 18.00), 2)
-            ))
+            # Ingestão em blocos para performance e baixo consumo de memória
+            df.to_sql(
+                name=table_name,
+                con=conn,
+                if_exists="replace",  # Garante idempotência e base atualizada
+                index=False,
+                chunksize=2000
+            )
+            print(f"Tabela '{table_name}' populada com sucesso: {len(df)} registros.")
 
-        # 4. Estoque
-        for s in range(1, 41):
-            ruptura = random.random() < 0.25
-            session.add(Estoque(
-                sku=f"SKU-{1000 + s}",
-                categoria=random.choice(categorias),
-                estoque_atual=random.randint(0, 80),
-                giro=round(random.uniform(0.2, 4.5), 2),
-                ruptura=ruptura,
-                dias_sem_estoque=random.randint(10, 45) if ruptura else 0,
-                fornecedor=f"Fornecedor {chr(65 + (s % 5))}",
-                lead_time=random.randint(7, 30),
-                custo_unitario=round(random.uniform(25, 150), 2)
-            ))
-
-        session.commit()
-        print("Dados simulados carregados com sucesso no SQLite.")
+    print("\nBanco de dados SQLite (vertice.db) carregado com os dados reais do case!")
 
 if __name__ == "__main__":
     seed_database()
@@ -964,9 +1032,9 @@ if __name__ == "__main__":
 
 ```
 [ ] 1. Banco SQLite (vertice.db) estruturado com as tabelas do Data Room e tabelas de gestão.
-[ ] 2. Script de seed (seed.py) disponível para testes locais imediatos antes da carga oficial externa.
+[ ] 2. Script de seed (seed.py) carrega os 5 CSVs tratados de backend/data/ sem dados inventados.
 [ ] 3. FastAPI rodando com endpoints /kpis, /prioritization, /simulator e /audit documentados no Swagger.
-[ ] 4. Cálculo de métricas 100% determinístico via Python/SQL (zero alucinação e zero valores fixos).
+[ ] 4. Cálculo de métricas 100% determinístico via Python/SQL sobre os dados reais do banco.
 [ ] 5. Tools analíticas e parser defensivo com 6 fallbacks integrados ao motor LangGraph.
 [ ] 6. Agente LangGraph utilizando ChatLiteLLM com 'openai/gemini-3-flash-preview' e rubrica do CFO ativa.
 [ ] 7. Frontend TanStack limpo, responsivo, sem jargões técnicos e focado na usabilidade C-Level.
