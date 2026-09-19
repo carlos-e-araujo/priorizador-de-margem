@@ -72,7 +72,7 @@ flowchart TD
 
 ---
 
-### [ ] Task 1.1: Setup do Ambiente Backend e Dependências Python
+### [x] Task 1.1: Setup do Ambiente Backend e Dependências Python
 - **Tipo:** Linear
 - **Executor:** Agente de Infraestrutura / Setup
 - **Arquivos Envolvidos:**
@@ -99,7 +99,7 @@ flowchart TD
 
 ---
 
-### [ ] Task 1.2: Scaffolding do Frontend TanStack e Configuração Base
+### [x] Task 1.2: Scaffolding do Frontend TanStack e Configuração Base
 - **Tipo:** Linear
 - **Executor:** Agente de Setup Frontend
 - **Arquivos Envolvidos:**
@@ -123,7 +123,7 @@ flowchart TD
 
 ---
 
-### [ ] Task 1.3: Criação dos Modelos SQLAlchemy e Execução do `seed.py`
+### [x] Task 1.3: Criação dos Modelos SQLAlchemy e Execução do `seed.py`
 - **Tipo:** Linear
 - **Executor:** Agente de Dados / ORM
 - **Referência:** [docs/04_ideia.md#L300-L450](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L300-L450) e [docs/04_ideia.md#L977-L1028](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L977-L1028)
@@ -147,8 +147,8 @@ flowchart TD
 ---
 
 ### Trilha A (Agente 1 — Backend): Serviços de Analytics e Endpoints de KPIs
-
-#### [ ] Task 2.A1: Implementação do Serviço Analítico Determinístico (`kpi_service.py`)
+ 
+#### [x] Task 2.A1: Implementação do Serviço Analítico Determinístico (`kpi_service.py`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Backend Analytics
 - **Referência:** [docs/04_ideia.md#L500-L515](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L500-L515)
@@ -165,7 +165,7 @@ flowchart TD
   3. Montar dinamicamente a lista de `KpiCardItem` com seus respectivos `status` (`normal`, `warning`, `critical`), títulos, subtítulos e valores formatados.
 - **Critério de Aceite:** Teste unitário executando `kpi_service.get_summary()` retorna objeto `KpiSummaryResponse` válido em menos de 100ms.
 
-#### [ ] Task 2.A2: Implementação do Router de KPIs (`kpi_router.py`)
+#### [x] Task 2.A2: Implementação do Router de KPIs (`kpi_router.py`)
 - **Tipo:** Paralelizável (depende de 2.A1)
 - **Executor:** Agente Backend Analytics
 - **Arquivos Envolvidos:**
@@ -182,7 +182,7 @@ flowchart TD
 
 ### Trilha B (Agente 2 — Backend): Motor de Priorização LangGraph e Tools
 
-#### [ ] Task 2.B1: Implementação das Tools Analíticas e Parser Resiliente
+#### [x] Task 2.B1: Implementação das Tools Analíticas e Parser Resiliente
 - **Tipo:** Paralelizável
 - **Executor:** Agente Backend IA
 - **Referência:** [docs/04_ideia.md#L665-L840](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L665-L840)
@@ -198,7 +198,7 @@ flowchart TD
   2. Implementar `parser.py` com a função `parse_json_from_response` (as 6 camadas defensivas de extração de JSON).
 - **Critério de Aceite:** Execução isolada das 4 tools retorna JSON strings válidas e o parser lida com markdown sem estourar exceções.
 
-#### [ ] Task 2.B2: Implementação do Grafo Multiagente com Reflexão (`agent_service.py`)
+#### [x] Task 2.B2: Implementação do Grafo Multiagente com Reflexão (`agent_service.py`)
 - **Tipo:** Paralelizável (depende de 2.B1)
 - **Executor:** Agente Backend IA
 - **Referência:** [docs/04_ideia.md#L615-L770](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L615-L770)
@@ -216,7 +216,7 @@ flowchart TD
   3. Gravar o resultado aprovado nas tabelas `prioritization_runs` e `initiatives` no SQLite.
 - **Critério de Aceite:** Execução de teste do grafo compila sem erros, roda os agentes e grava ciclo no banco.
 
-#### [ ] Task 2.B3: Implementação do Router de Priorização (`prioritization_router.py`)
+#### [x] Task 2.B3: Implementação do Router de Priorização (`prioritization_router.py`)
 - **Tipo:** Paralelizável (depende de 2.B2)
 - **Executor:** Agente Backend IA
 - **Arquivos Envolvidos:**
@@ -235,7 +235,7 @@ flowchart TD
 
 ### Trilha C (Agente 3 — Backend): Simulador de Alavancas e Auditoria de Processo
 
-#### [ ] Task 2.C1: Implementação do Serviço e Router do Simulador (`simulator_service.py`)
+#### [x] Task 2.C1: Implementação do Serviço e Router do Simulador (`simulator_service.py`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Backend Simulação
 - **Referência:** [docs/04_ideia.md#L540-L565](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L540-L565)
@@ -251,7 +251,7 @@ flowchart TD
   3. Criar `simulator_router.py` expondo `GET /levers` e `POST /simulate`.
 - **Critério de Aceite:** `GET /levers` retorna lista dinâmica de alavancas e `POST /simulate` recalcula valores com latência inferior a 50ms.
 
-#### [ ] Task 2.C2: Implementação do Router e Exportador de Auditoria (`audit_router.py`)
+#### [x] Task 2.C2: Implementação do Router e Exportador de Auditoria (`audit_router.py`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Backend Auditoria
 - **Referência:** [docs/04_ideia.md#L560](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L560)
@@ -266,7 +266,7 @@ flowchart TD
 
 ### Trilha D (Agente 4 — Frontend): Client API, Shell Executivo e Hero KPI Cards
 
-#### [ ] Task 2.D1: Camada de Serviços de API Tipada (`src/services/api.ts`)
+#### [x] Task 2.D1: Camada de Serviços de API Tipada (`src/services/api.ts`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Frontend Core
 - **Arquivos Envolvidos:**
@@ -280,7 +280,7 @@ flowchart TD
      - `SimulatorLever`, `SimulatorRunRequest`, `SimulatorRunResponse`
 - **Critério de Aceite:** Funções tipadas `fetchKpis()`, `runPrioritization()`, `fetchLatestPrioritization()`, `simulateLevers()` prontas para consumo pelo TanStack Query.
 
-#### [ ] Task 2.D2: Layout Shell, Navegação e Top Bar (`src/routes/__root.tsx`)
+#### [x] Task 2.D2: Layout Shell, Navegação e Top Bar (`src/routes/__root.tsx`)
 - **Tipo:** Paralelizável (depende de 2.D1)
 - **Executor:** Agente Frontend Core
 - **Arquivos Envolvidos:**
@@ -292,7 +292,7 @@ flowchart TD
   3. Garantir transição fluida SPA via `@tanstack/react-router`.
 - **Critério de Aceite:** Header executivo renderiza de forma consistente em todas as rotas.
 
-#### [ ] Task 2.D3: Container Dinâmico de KPI Cards (`KpiCardContainer.tsx`)
+#### [x] Task 2.D3: Container Dinâmico de KPI Cards (`KpiCardContainer.tsx`)
 - **Tipo:** Paralelizável (depende de 2.D1)
 - **Executor:** Agente Frontend Core
 - **Referência:** [docs/04_ideia.md#L877-L904](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L877-L904)
@@ -311,7 +311,7 @@ flowchart TD
 
 ### Trilha E (Agente 5 — Frontend): Tabela de Priorização e Gestão de Iniciativas
 
-#### [ ] Task 2.E1: Tabela Dinâmica TanStack (`PrioritizationTable.tsx`)
+#### [x] Task 2.E1: Tabela Dinâmica TanStack (`PrioritizationTable.tsx`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Frontend Tabela
 - **Referência:** [docs/04_ideia.md#L905-L910](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L905-L910)
@@ -330,7 +330,7 @@ flowchart TD
   3. Implementar botão superior `[ Rodar Motor de Priorização ]` com feedback visual de carregamento durante a execução do agente LangGraph.
 - **Critério de Aceite:** Tabela ordena dinamicamente por Score e filtra instantaneamente por abas de dias.
 
-#### [ ] Task 2.E2: Modal de Detalhes da Iniciativa e Mutação de Status
+#### [x] Task 2.E2: Modal de Detalhes da Iniciativa e Mutação de Status
 - **Tipo:** Paralelizável (depende de 2.E1)
 - **Executor:** Agente Frontend Tabela
 - **Arquivos Envolvidos:**
@@ -348,7 +348,7 @@ flowchart TD
 
 ### Trilha F (Agente 6 — Frontend): Painel de Simulação e Gaveta de Auditoria
 
-#### [ ] Task 2.F1: Painel Dinâmico de Sliders (`DynamicSliderPanel.tsx`)
+#### [x] Task 2.F1: Painel Dinâmico de Sliders (`DynamicSliderPanel.tsx`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Frontend Simulação
 - **Referência:** [docs/04_ideia.md#L911-L916](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L911-L916)
@@ -362,7 +362,7 @@ flowchart TD
   4. **Zero nomes de alavancas fixos no código.**
 - **Critério de Aceite:** Mover os sliders recalcula instantaneamente os números exibidos na tela.
 
-#### [ ] Task 2.F2: Gaveta Lateral de Auditoria & Governança (`AuditDrawer.tsx`)
+#### [x] Task 2.F2: Gaveta Lateral de Auditoria & Governança (`AuditDrawer.tsx`)
 - **Tipo:** Paralelizável
 - **Executor:** Agente Frontend Auditoria
 - **Referência:** [docs/04_ideia.md#L917-L920](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L917-L920)
@@ -385,7 +385,7 @@ flowchart TD
 
 ---
 
-### [ ] Task 3.1: Integração Full-Stack e Ajustes de Conexão
+### [x] Task 3.1: Integração Full-Stack e Ajustes de Conexão
 - **Tipo:** Linear
 - **Executor:** Agente de Integração
 - **Descrição Detalhada:**
@@ -396,7 +396,7 @@ flowchart TD
 
 ---
 
-### [ ] Task 3.2: Ensaio Cronometrado do Pitch Executivo (60 Segundos)
+### [x] Task 3.2: Ensaio Cronometrado do Pitch Executivo (60 Segundos)
 - **Tipo:** Linear
 - **Executor:** Squad / Apresentador
 - **Referência:** [docs/04_ideia.md#L97-L106](file:///home/carlos/Projects/prototipo_final/docs/04_ideia.md#L97-L106)
@@ -411,7 +411,7 @@ flowchart TD
 
 ---
 
-### [ ] Task 3.3: Auditoria do Artefato de Processo e Conformidade do Case
+### [x] Task 3.3: Auditoria do Artefato de Processo e Conformidade do Case
 - **Tipo:** Linear
 - **Executor:** Agente de Qualidade / Compliance
 - **Referência:** [docs/00_case_vertice.md#L292-L305](file:///home/carlos/Projects/prototipo_final/docs/00_case_vertice.md#L292-L305)
