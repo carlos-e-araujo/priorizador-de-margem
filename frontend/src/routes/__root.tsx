@@ -77,13 +77,13 @@ const RootComponent: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => openAuditDrawer()}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700/80 text-xs font-semibold text-neutral-200 hover:text-white transition shadow-sm"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 border border-emerald-700/80 text-xs font-semibold text-neutral-200 hover:text-white transition shadow-sm"
               >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <ShieldCheck className="w-4 h-4 text-neutral-200" />
                 <span className="hidden sm:inline">Auditoria & Governança</span>
                 <span className="sm:hidden">Auditoria</span>
                 {latestRun?.critic_score !== undefined && (
-                  <span className="font-mono text-[11px] text-emerald-400 font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  <span className="font-mono text-[11px] text-emerald-200 font-bold bg-emerald-900 px-1.5 py-0.5 rounded border border-emerald-500/30">
                     {latestRun.critic_score} pts
                   </span>
                 )}
@@ -103,7 +103,7 @@ const RootComponent: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="font-semibold text-neutral-300">Vértice Retail S.A.</span>
               <span>·</span>
-              <span>Protótipo Módulo C — Recuperação de Margem Operacional</span>
+              <span>Recuperação de Margem Operacional</span>
             </div>
 
             <div className="flex items-center gap-4">
