@@ -150,7 +150,7 @@ export const DynamicSliderPanel: React.FC = () => {
           <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Δ EBITDA Adicionado ao Caixa</span>
+              <span>EBITDA Adicionado ao Caixa</span>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">
               {simulationResult?.delta_ebitda_brl !== undefined

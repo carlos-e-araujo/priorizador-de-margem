@@ -325,17 +325,13 @@ export const PrioritizationTable: React.FC = () => {
               <span>EBITDA Potencial: <strong className="text-emerald-700 font-mono text-sm">{formatCurrency(runData.total_ebitda_potential)}</strong></span>
             </div>
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-            <button
-              onClick={() => openAuditDrawer(runData.id)}
-              className="flex items-center gap-1.5 text-slate-700 hover:text-emerald-700 transition group cursor-pointer text-left"
-              title="Clique para abrir auditoria detalhada e parecer do validador financeiro"
-            >
+            <div className="flex items-center gap-1.5 text-slate-700">
               <ShieldCheck className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
               <span>Validador Financeiro:</span>
               <span className="font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 group-hover:bg-emerald-100 group-hover:border-emerald-300 transition">
                 {runData.critic_verdict} ({runData.critic_score}/100)
               </span>
-            </button>
+            </div>
           </div>
 
           <div className="text-[11px] text-slate-500">
@@ -366,8 +362,7 @@ export const PrioritizationTable: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            30 Dias (Quick Wins)
+            30 Dias
           </button>
           <button
             onClick={() => setSelectedHorizon(60)}
