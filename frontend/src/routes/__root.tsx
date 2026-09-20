@@ -105,18 +105,6 @@ const RootComponent: React.FC = () => {
               <span>·</span>
               <span>Recuperação de Margem Operacional</span>
             </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => openAuditDrawer()}
-                className="text-neutral-400 hover:text-emerald-400 transition inline-flex items-center gap-1"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Parecer do CFO & Rubrica
-              </button>
-              <span>·</span>
-              <span className="text-neutral-500 font-mono">v1.0.0-exec</span>
-            </div>
           </div>
         </footer>
 
