@@ -29,6 +29,8 @@ ENV/
 *.db
 *.sqlite3
 vertice.db
+vertice.db-shm
+vertice.db-wal
 
 # Testing and linting
 .pytest_cache/
