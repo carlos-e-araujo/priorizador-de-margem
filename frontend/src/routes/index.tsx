@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
+import { Target } from 'lucide-react';
 import { rootRoute } from './__root';
 import { KpiCardContainer } from '../components/KpiCardContainer';
 import { PrioritizationTable } from '../components/PrioritizationTable';
@@ -17,14 +18,19 @@ const IndexPage: React.FC = () => {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 2. Motor de Priorização Multiagente com Reflexão Crítica */}
-      <section id="esteira" className="scroll-mt-24 space-y-3">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900 tracking-tight">
-            Esteira de Decisão Executiva & Matriz de Priorização
-          </h2>
-          <p className="text-xs text-slate-500">
-            Iniciativas investigadas por agentes especialistas (Comercial, Operações, CX) e validadas pela rubrica do CFO
-          </p>
+      <section id="esteira" className="scroll-mt-24 space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600">
+            <Target className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 tracking-tight">
+              Esteira de Decisão Executiva & Matriz de Priorização
+            </h2>
+            <p className="text-xs text-slate-500">
+              Iniciativas investigadas por agentes especialistas (Comercial, Operações, CX) e validadas pela rubrica do CFO
+            </p>
+          </div>
         </div>
         <PrioritizationTable />
       </section>
