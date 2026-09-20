@@ -1,5 +1,7 @@
 import type {
   KpiSummaryResponse,
+  KpiBreakdownResponse,
+  KpiBreakdownRow,
   KpiBreakdownItem,
   PrioritizationRunResponse,
   InitiativeResponse,
@@ -59,8 +61,8 @@ export const api = {
     return request<KpiSummaryResponse>('/kpis/summary');
   },
 
-  async getKpisBreakdown(dimension: 'categoria' | 'canal' = 'categoria'): Promise<KpiBreakdownItem[]> {
-    return request<KpiBreakdownItem[]>(`/kpis/breakdown?dimension=${encodeURIComponent(dimension)}`);
+  async getKpisBreakdown(dimension: 'categoria' | 'canal' = 'categoria'): Promise<KpiBreakdownResponse> {
+    return request<KpiBreakdownResponse>(`/kpis/breakdown?dimension=${encodeURIComponent(dimension)}`);
   },
 
   // --- Motor de Priorização Multiagente ---
