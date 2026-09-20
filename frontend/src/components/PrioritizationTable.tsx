@@ -27,6 +27,7 @@ import {
 import { api } from '../services/api';
 import type { InitiativeResponse, HorizonDays } from '../types';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
+import { ApprovalSwitch } from './ApprovalSwitch';
 
 const columnHelper = createColumnHelper<InitiativeResponse>();
 
@@ -252,48 +253,29 @@ export const PrioritizationTable: React.FC = () => {
 
       columnHelper.display({
         id: 'actions',
-        header: () => <span className="font-semibold text-neutral-300 text-right block">Ações</span>,
+        header: () => <span className="font-semibold text-neutral-300 text-right block">Decisão</span>,
         cell: (info) => {
           const row = info.row.original;
-          const isApproved = row.approval_status === 'APPROVED';
-          const isRejected = row.approval_status === 'REJECTED';
-          const isPendingCurrent = approvingId === row.id;
-          const isRejectingCurrent = rejectingId === row.id;
+          const isApproved = row.approval_status !== 'REJECTED';
+          const isPendingCurrent = approvingId === row.id || rejectingId === row.id;
+
+          const handleToggle = () => {
+            if (isApproved) {
+              rejectMutation.mutate(row.id);
+            } else {
+              approveMutation.mutate(row.id);
+            }
+          };
 
           return (
-            <div className="flex items-center justify-end gap-1.5">
-              {isApproved ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                  <Check className="w-3.5 h-3.5" />
-                  Homologada
-                </span>
-              ) : isRejected ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                  <X className="w-3.5 h-3.5" />
-                  Rejeitada
-                </span>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => approveMutation.mutate(row.id)}
-                    disabled={isPendingCurrent || isRejectingCurrent}
-                    className="px-2 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-xs font-semibold text-white transition disabled:opacity-50 flex items-center gap-0.5 shadow-sm"
-                    title="Homologar iniciativa"
-                  >
-                    <Check className="w-3 h-3" />
-                    {isPendingCurrent ? '...' : 'Aprovar'}
-                  </button>
-                  <button
-                    onClick={() => rejectMutation.mutate(row.id)}
-                    disabled={isPendingCurrent || isRejectingCurrent}
-                    className="px-2 py-1 rounded-lg bg-neutral-800 hover:bg-rose-500/20 hover:text-rose-300 text-xs font-medium text-neutral-400 border border-neutral-700/60 transition disabled:opacity-50 flex items-center gap-0.5"
-                    title="Rejeitar iniciativa"
-                  >
-                    <X className="w-3 h-3" />
-                    {isRejectingCurrent ? '...' : 'Rejeitar'}
-                  </button>
-                </div>
-              )}
+            <div className="flex items-center justify-end gap-2">
+              <ApprovalSwitch
+                isApproved={isApproved}
+                isPending={isPendingCurrent}
+                onToggle={handleToggle}
+                size="sm"
+                showLabel={true}
+              />
 
               <button
                 onClick={() => {

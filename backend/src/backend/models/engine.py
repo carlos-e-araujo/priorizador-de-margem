@@ -34,7 +34,7 @@ class Initiative(Base):
     horizon_days: Mapped[int] = mapped_column(Integer)   # 30, 60 ou 90
     priority_score: Mapped[float] = mapped_column(Float)
     requires_human_approval: Mapped[bool] = mapped_column(Boolean, default=False)
-    approval_status: Mapped[str] = mapped_column(String(20), default="PENDING")
-    kpi_origin_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    approval_status: Mapped[str] = mapped_column(String(20), default="APPROVED")
+    kpi_origin_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     run: Mapped["PrioritizationRun"] = relationship("PrioritizationRun", back_populates="initiatives")

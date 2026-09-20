@@ -1,12 +1,15 @@
 import React from 'react';
 import type { SimulatorLever } from '../types';
-import { Ban, CheckCircle, Clock } from 'lucide-react';
+import { Ban, CheckCircle } from 'lucide-react';
+import { ApprovalSwitch } from './ApprovalSwitch';
 
 interface ScenarioSliderProps {
   lever: SimulatorLever;
   value: number; // e.g. 0.15 for 15%
   onChange: (val: number) => void;
   impactBrl?: number;
+  onToggleApproval?: (newStatus: 'APPROVED' | 'REJECTED') => void;
+  isToggling?: boolean;
 }
 
 export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
@@ -14,9 +17,11 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
   value,
   onChange,
   impactBrl,
+  onToggleApproval,
+  isToggling = false,
 }) => {
   const isRejected = lever.approval_status === 'REJECTED';
-  const isApproved = lever.approval_status === 'APPROVED';
+  const isApproved = !isRejected;
 
   const formatPct = (val: number) => `${Math.round(val * 100)}%`;
   const formatCurrency = (val: number) =>
@@ -33,37 +38,28 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
     <div
       className={`p-4 rounded-xl border transition space-y-3 ${
         isRejected
-          ? 'bg-neutral-950/40 border-neutral-800/50 opacity-60'
-          : isApproved
-          ? 'bg-neutral-900/80 border-emerald-500/30 hover:border-emerald-500/50 shadow-sm'
-          : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'
+          ? 'bg-neutral-950/50 border-rose-900/30 opacity-75'
+          : 'bg-neutral-900/80 border-emerald-500/30 hover:border-emerald-500/50 shadow-sm'
       }`}
     >
       {/* Header do Slider */}
       <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
+        <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
               {lever.pilar}
             </span>
 
             {/* Badge de Governança vinculado à Esteira */}
-            {isApproved && (
+            {isApproved ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <CheckCircle className="w-2.5 h-2.5" />
-                Homologada
+                Aprovada
               </span>
-            )}
-            {isRejected && (
+            ) : (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
                 <Ban className="w-2.5 h-2.5" />
-                Rejeitada no Comitê
-              </span>
-            )}
-            {!isApproved && !isRejected && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <Clock className="w-2.5 h-2.5" />
-                Pendente
+                Recusada
               </span>
             )}
 
@@ -82,8 +78,8 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
           </p>
         </div>
 
-        {/* Valor atual ajustado */}
-        <div className="text-right shrink-0">
+        {/* Valor atual ajustado e Switch de Aprovação/Recusa */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <span
             className={`text-sm font-bold font-mono px-2 py-0.5 rounded border ${
               isRejected
@@ -93,6 +89,14 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
           >
             {isRejected ? '0%' : formatPct(value)}
           </span>
+
+          <ApprovalSwitch
+            isApproved={isApproved}
+            isPending={isToggling}
+            onToggle={() => onToggleApproval?.(isApproved ? 'REJECTED' : 'APPROVED')}
+            showLabel={false}
+            size="md"
+          />
         </div>
       </div>
 
@@ -126,7 +130,7 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
         </span>
         {isRejected ? (
           <span className="font-mono text-xs text-rose-400 font-semibold">
-            R$ 0,00 (Rejeitada)
+            R$ 0,00 (Recusada)
           </span>
         ) : (
           <div className="flex items-center gap-1.5">

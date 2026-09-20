@@ -304,7 +304,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
             init["risk_level"],
             init["horizon_days"],
         )
-        init["approval_status"] = "PENDING"
+        init["approval_status"] = "APPROVED"
 
     initiatives.sort(key=lambda x: x["priority_score"], reverse=True)
     return initiatives
@@ -610,7 +610,7 @@ Estrutura:
                 "horizon_days": horizon,
                 "priority_score": score,
                 "requires_human_approval": req_approval,
-                "approval_status": "PENDING",
+                "approval_status": "APPROVED",
                 "kpi_origin_id": kpi_origin,
             }
         )
@@ -718,7 +718,7 @@ def save_to_db_node(state: AgentState) -> Dict[str, Any]:
                 horizon_days=init_data["horizon_days"],
                 priority_score=init_data["priority_score"],
                 requires_human_approval=init_data["requires_human_approval"],
-                approval_status="PENDING",
+                approval_status="APPROVED",
                 kpi_origin_id=init_data.get("kpi_origin_id"),
             )
             session.add(initiative)
@@ -815,7 +815,7 @@ def run_prioritization_cycle(force_refresh: bool = False) -> Dict[str, Any]:
                     horizon_days=item["horizon_days"],
                     priority_score=item["priority_score"],
                     requires_human_approval=item["requires_human_approval"],
-                    approval_status="PENDING",
+                    approval_status="APPROVED",
                 )
                 session.add(initiative)
             session.commit()

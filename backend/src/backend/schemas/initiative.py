@@ -19,7 +19,7 @@ class InitiativeResponse(BaseModel):
     horizon_days: int = Field(..., description="30, 60 ou 90 dias")
     priority_score: float
     requires_human_approval: bool
-    approval_status: str = Field(default="PENDING")
+    approval_status: str = Field(default="APPROVED")
     kpi_origin_id: str | None = Field(default=None, description="Identificador do card/anomalia de origem")
 
 

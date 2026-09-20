@@ -15,7 +15,7 @@ class SimulatorLever(BaseModel):
     step: float = Field(0.05, description="Incremento do controle de ajuste")
     baseline_cost_brl: float = Field(..., description="Montante base anual de custo/perda calculado nas tabelas")
     initiative_id: Optional[int] = Field(None, description="ID da iniciativa na esteira de priorização")
-    approval_status: str = Field("PENDING", description="Status de governança: PENDING, APPROVED, REJECTED")
+    approval_status: str = Field("APPROVED", description="Status de governança: APPROVED, REJECTED, PENDING")
     effort_level: int = Field(1, description="Nível de esforço 1=Baixo, 2=Médio, 3=Alto")
     kpi_origin_id: Optional[str] = Field(None, description="ID do card/anomalia de origem")
 

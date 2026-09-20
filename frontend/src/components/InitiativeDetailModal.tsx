@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   X,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import type { InitiativeResponse, ApprovalStatus } from '../types';
+import { ApprovalSwitch } from './ApprovalSwitch';
 
 interface InitiativeDetailModalProps {
   initiative: InitiativeResponse | null;
@@ -28,6 +29,15 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
   onStatusUpdated,
 }) => {
   const queryClient = useQueryClient();
+  const [currentStatus, setCurrentStatus] = useState<ApprovalStatus>(
+    initiative?.approval_status || 'APPROVED'
+  );
+
+  useEffect(() => {
+    if (initiative) {
+      setCurrentStatus(initiative.approval_status);
+    }
+  }, [initiative]);
 
   const mutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) =>
@@ -35,6 +45,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['prioritization-latest'] });
       queryClient.invalidateQueries({ queryKey: ['simulator-levers'] });
+      if (updated) {
+        setCurrentStatus(updated.approval_status);
+      }
       if (initiative && updated) {
         initiative.approval_status = updated.approval_status;
       }
@@ -61,19 +74,19 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
 
   const getApprovalBadge = (status: ApprovalStatus) => {
     switch (status) {
-      case 'APPROVED':
-        return { label: 'Aprovada', bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', icon: CheckCircle2 };
       case 'REJECTED':
-        return { label: 'Rejeitada', bg: 'bg-rose-500/20 text-rose-300 border-rose-500/40', icon: XCircle };
+        return { label: 'Recusada', bg: 'bg-rose-500/20 text-rose-300 border-rose-500/40', icon: XCircle };
+      case 'APPROVED':
       case 'PENDING':
       default:
-        return { label: 'Pendente de Decisão', bg: 'bg-amber-500/20 text-amber-300 border-amber-500/40', icon: Clock };
+        return { label: 'Aprovada', bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', icon: CheckCircle2 };
     }
   };
 
   const effortBadge = getLevelBadge(initiative.effort_level);
   const riskBadge = getLevelBadge(initiative.risk_level);
-  const approvalBadge = getApprovalBadge(initiative.approval_status);
+  const isApproved = currentStatus !== 'REJECTED';
+  const approvalBadge = getApprovalBadge(currentStatus);
   const ApprovalIcon = approvalBadge.icon;
 
   const handleUpdateStatus = (status: 'APPROVED' | 'REJECTED') => {
@@ -212,38 +225,31 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Footer com Ações */}
+        {/* Footer com Switch de Decisão Executiva */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 border-t border-neutral-800 bg-neutral-900/90">
           <div className="text-xs text-neutral-400">
-            {initiative.approval_status === 'APPROVED' ? (
+            {isApproved ? (
               <span className="text-emerald-400 font-medium flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" /> Iniciativa homologada para execução na sprint.
               </span>
-            ) : initiative.approval_status === 'REJECTED' ? (
-              <span className="text-rose-400 font-medium flex items-center gap-1.5">
-                <XCircle className="w-4 h-4" /> Iniciativa desconsiderada da esteira.
-              </span>
             ) : (
-              <span>Clique em um botão para homologar ou rejeitar a iniciativa.</span>
+              <span className="text-rose-400 font-medium flex items-center gap-1.5">
+                <XCircle className="w-4 h-4" /> Iniciativa recusada da esteira (ganho zerado no simulador).
+              </span>
             )}
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-            <button
-              onClick={() => handleUpdateStatus('REJECTED')}
-              disabled={mutation.isPending || initiative.approval_status === 'REJECTED'}
-              className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-rose-500/20 hover:text-rose-300 border border-neutral-700 text-xs font-semibold text-neutral-300 transition disabled:opacity-40"
-            >
-              {mutation.isPending ? 'Processando...' : 'Rejeitar'}
-            </button>
-            <button
-              onClick={() => handleUpdateStatus('APPROVED')}
-              disabled={mutation.isPending || initiative.approval_status === 'APPROVED'}
-              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition shadow-lg shadow-emerald-950 disabled:opacity-40 flex items-center gap-1.5"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              {mutation.isPending ? 'Homologando...' : 'Aprovar Iniciativa'}
-            </button>
+            <span className="text-xs text-neutral-400 font-medium">
+              Decisão da Iniciativa:
+            </span>
+            <ApprovalSwitch
+              isApproved={isApproved}
+              isPending={mutation.isPending}
+              onToggle={() => handleUpdateStatus(isApproved ? 'REJECTED' : 'APPROVED')}
+              showLabel={true}
+              size="md"
+            />
           </div>
         </div>
       </div>

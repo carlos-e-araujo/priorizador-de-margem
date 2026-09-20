@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Sliders, TrendingUp, Clock, RotateCcw, Zap, AlertCircle, CheckCircle, Ban, Layers } from 'lucide-react';
 import { api } from '../services/api';
 import type { SimulatorRunResponse } from '../types';
@@ -7,6 +7,7 @@ import { ScenarioSlider } from './ScenarioSlider';
 
 export const DynamicSliderPanel: React.FC = () => {
   const [, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
   // Buscar alavancas descobertas pelo motor (vinculadas 1:1 às iniciativas da esteira)
   const {
@@ -22,15 +23,36 @@ export const DynamicSliderPanel: React.FC = () => {
   // Estado dos valores de ajuste { lever_id: target_pct }
   const [adjustments, setAdjustments] = useState<Record<string, number>>({});
   const [simulationResult, setSimulationResult] = useState<SimulatorRunResponse | null>(null);
+  const [togglingInitiativeId, setTogglingInitiativeId] = useState<number | null>(null);
 
-  // Inicializar adjustments com os valores correntes de cada alavanca
+  // Mutação para alternar aprovação/recusa da alavanca/iniciativa com switch
+  const toggleApprovalMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) =>
+      api.updateInitiativeStatus(id, status),
+    onMutate: ({ id }) => {
+      setTogglingInitiativeId(id);
+    },
+    onSettled: () => {
+      setTogglingInitiativeId(null);
+      queryClient.invalidateQueries({ queryKey: ['simulator-levers'] });
+      queryClient.invalidateQueries({ queryKey: ['prioritization-latest'] });
+    },
+  });
+
+  // Inicializar e sincronizar adjustments preservando valores já manipulados
   useEffect(() => {
     if (leversData?.levers && leversData.levers.length > 0) {
-      const initial: Record<string, number> = {};
-      leversData.levers.forEach((l) => {
-        initial[l.id] = l.current_value_pct;
+      setAdjustments((prev) => {
+        const next: Record<string, number> = { ...prev };
+        leversData.levers.forEach((l) => {
+          if (l.approval_status === 'REJECTED') {
+            next[l.id] = 0.0;
+          } else if (next[l.id] === undefined || next[l.id] === 0) {
+            next[l.id] = l.current_value_pct > 0 ? l.current_value_pct : 1.0;
+          }
+        });
+        return next;
       });
-      setAdjustments(initial);
     }
   }, [leversData]);
 
@@ -66,7 +88,12 @@ export const DynamicSliderPanel: React.FC = () => {
     if (!leversData?.levers) return;
     const resetValues: Record<string, number> = {};
     leversData.levers.forEach((l) => {
-      resetValues[l.id] = l.current_value_pct;
+      resetValues[l.id] =
+        l.approval_status === 'REJECTED'
+          ? 0.0
+          : l.current_value_pct > 0
+          ? l.current_value_pct
+          : 1.0;
     });
     setAdjustments(resetValues);
   };
@@ -76,9 +103,8 @@ export const DynamicSliderPanel: React.FC = () => {
 
   // Estatísticas de sincronização com a Esteira
   const levers = leversData?.levers || [];
-  const approvedCount = levers.filter((l) => l.approval_status === 'APPROVED').length;
   const rejectedCount = levers.filter((l) => l.approval_status === 'REJECTED').length;
-  const pendingCount = levers.filter((l) => l.approval_status !== 'APPROVED' && l.approval_status !== 'REJECTED').length;
+  const approvedCount = levers.length - rejectedCount;
 
   return (
     <div className="space-y-4">
@@ -103,20 +129,13 @@ export const DynamicSliderPanel: React.FC = () => {
           {levers.length > 0 && (
             <div className="hidden lg:flex items-center gap-1.5 text-[11px] bg-neutral-900 border border-neutral-800 px-2.5 py-1 rounded-lg">
               <Layers className="w-3 h-3 text-neutral-400" />
-              <span className="text-neutral-400 font-medium">{levers.length} Iniciativas Ativas:</span>
-              {approvedCount > 0 && (
-                <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
-                  <CheckCircle className="w-2.5 h-2.5" /> {approvedCount}
-                </span>
-              )}
-              {pendingCount > 0 && (
-                <span className="text-amber-400 font-semibold flex items-center gap-0.5">
-                  <Clock className="w-2.5 h-2.5" /> {pendingCount}
-                </span>
-              )}
+              <span className="text-neutral-400 font-medium">{levers.length} Alavancas:</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
+                <CheckCircle className="w-2.5 h-2.5" /> {approvedCount} Aprovadas
+              </span>
               {rejectedCount > 0 && (
                 <span className="text-rose-400 font-semibold flex items-center gap-0.5">
-                  <Ban className="w-2.5 h-2.5" /> {rejectedCount}
+                  <Ban className="w-2.5 h-2.5" /> {rejectedCount} Recusadas
                 </span>
               )}
             </div>
@@ -201,9 +220,18 @@ export const DynamicSliderPanel: React.FC = () => {
             <ScenarioSlider
               key={lever.id}
               lever={lever}
-              value={adjustments[lever.id] ?? lever.current_value_pct}
+              value={adjustments[lever.id] ?? (lever.approval_status === 'REJECTED' ? 0 : lever.current_value_pct)}
               onChange={(val) => handleSliderChange(lever.id, val)}
               impactBrl={simulationResult?.impact_by_lever?.[lever.id]}
+              isToggling={togglingInitiativeId === lever.initiative_id}
+              onToggleApproval={(newStatus) => {
+                if (lever.initiative_id) {
+                  toggleApprovalMutation.mutate({
+                    id: lever.initiative_id,
+                    status: newStatus,
+                  });
+                }
+              }}
             />
           ))}
         </div>

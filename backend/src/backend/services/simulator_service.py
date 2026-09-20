@@ -61,15 +61,13 @@ def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
         levers: list[SimulatorLever] = []
         for item in inits:
             is_rejected = item.approval_status == "REJECTED"
-            is_approved = item.approval_status == "APPROVED"
+            status = "REJECTED" if is_rejected else "APPROVED"
 
             # Valor padrão inicial de modulação
             if is_rejected:
                 default_pct = 0.0
-            elif is_approved:
-                default_pct = 1.0
             else:
-                default_pct = 0.80
+                default_pct = 1.0
 
             lever = SimulatorLever(
                 id=f"init_{item.id}",
@@ -82,7 +80,7 @@ def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
                 step=0.05,
                 baseline_cost_brl=round(float(item.estimated_impact_brl), 2),
                 initiative_id=item.id,
-                approval_status=item.approval_status or "PENDING",
+                approval_status=status,
                 effort_level=item.effort_level or 1,
                 kpi_origin_id=item.kpi_origin_id,
             )
