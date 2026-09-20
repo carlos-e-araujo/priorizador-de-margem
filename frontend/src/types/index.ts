@@ -21,26 +21,14 @@ export interface KpiSummaryResponse {
   cards: KpiCardItem[];
 }
 
-export interface KpiBreakdownRow {
+export interface KpiBreakdownItem {
   dimension_value: string;
-  total_pedidos: number;
+  receita_bruta?: number;
   receita_liquida: number;
-  formatted_receita_liquida: string;
   margem_contribuicao: number;
-  formatted_margem_contribuicao: string;
   margem_contribuicao_pct: number;
-  pedidos_deficitarios: number;
-  custo_frete: number;
-  taxa_devolucao_pct: number;
+  devolucoes?: number;
 }
-
-export interface KpiBreakdownResponse {
-  dimension: 'categoria' | 'canal';
-  rows: KpiBreakdownRow[];
-}
-
-// Retrocompatibilidade
-export type KpiBreakdownItem = KpiBreakdownRow;
 
 export interface InitiativeResponse {
   id: number;
