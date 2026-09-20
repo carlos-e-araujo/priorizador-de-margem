@@ -255,7 +255,7 @@ export const PrioritizationTable: React.FC = () => {
 
       columnHelper.display({
         id: 'actions',
-        header: () => <span className="font-semibold text-slate-700 text-right block">Decisão</span>,
+        header: () => <span className="font-semibold text-slate-700 text-right block">Diagnóstico & Decisão</span>,
         cell: (info) => {
           const row = info.row.original;
           const isApproved = row.approval_status !== 'REJECTED';
@@ -270,7 +270,19 @@ export const PrioritizationTable: React.FC = () => {
           };
 
           return (
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2.5 whitespace-nowrap">
+              <button
+                onClick={() => {
+                  setSelectedInitiative(row);
+                  setIsModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 hover:border-emerald-300 text-xs font-semibold transition shadow-xs group shrink-0"
+                title="Ver detalhes metodológicos, fato observado e diagnóstico de causa-raiz"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                <span>Ver Diagnóstico</span>
+              </button>
+
               <ApprovalSwitch
                 isApproved={isApproved}
                 isPending={isPendingCurrent}
@@ -278,17 +290,6 @@ export const PrioritizationTable: React.FC = () => {
                 size="sm"
                 showLabel={true}
               />
-
-              <button
-                onClick={() => {
-                  setSelectedInitiative(row);
-                  setIsModalOpen(true);
-                }}
-                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition border border-slate-200 shadow-xs"
-                title="Ver detalhes e diagnóstico de causa-raiz"
-              >
-                <FileText className="w-3.5 h-3.5" />
-              </button>
             </div>
           );
         },
