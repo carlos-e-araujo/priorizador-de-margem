@@ -25,7 +25,7 @@ export const KpiCardContainer: React.FC = () => {
               Diagnóstico Determinístico de Operações & Margem
             </h2>
             <p className="text-xs text-slate-500">
-              Métricas agregadas auditáveis sobre a base transacional (Dataroom Vértice)
+              Métricas agregadas auditáveis sobre a base transacional.
             </p>
           </div>
         </div>
@@ -45,17 +45,6 @@ export const KpiCardContainer: React.FC = () => {
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin text-emerald-600' : ''}`} />
           </button>
         </div>
-      </div>
-
-      {/* Faixa de Linhagem de Dados e Decisão Executiva */}
-      <div className="px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between gap-2 shadow-xs">
-        <span className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span><strong>Fluxo de Decisão Conectado:</strong> Cada anomalia crítica diagnosticada abaixo é investigada pelos especialistas da <strong>Esteira Executiva</strong> e modulada no <strong>Simulador de Sensibilidade</strong>.</span>
-        </span>
-        <span className="hidden sm:inline font-mono text-[10px] text-slate-400 shrink-0">
-          Diagnóstico ➔ Esteira ➔ Simulador
-        </span>
       </div>
 
       {/* Grid de Cards ou Skeletons (2 colunas para melhor leitura e visualização executiva) */}
