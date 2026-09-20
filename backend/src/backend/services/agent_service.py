@@ -874,10 +874,17 @@ def build_agent_graph():
     builder.add_node("save_db", save_to_db_node)
 
     builder.add_edge(START, "orchestrator")
+
+    # Fan-out: Especialistas setoriais executam simultaneamente em paralelo
     builder.add_edge("orchestrator", "commercial")
-    builder.add_edge("commercial", "operations")
-    builder.add_edge("operations", "cx")
+    builder.add_edge("orchestrator", "operations")
+    builder.add_edge("orchestrator", "cx")
+
+    # Fan-in: O nó Consolidador aguarda a conclusão de todos os especialistas
+    builder.add_edge("commercial", "consolidator")
+    builder.add_edge("operations", "consolidator")
     builder.add_edge("cx", "consolidator")
+
     builder.add_edge("consolidator", "critic_cfo")
 
     builder.add_conditional_edges(
