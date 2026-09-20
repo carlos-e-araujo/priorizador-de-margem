@@ -2,20 +2,45 @@ import json
 from langchain_core.tools import tool
 from sqlalchemy import case, desc, func, select
 from backend.database import SessionLocal
-from backend.models.dataroom import Atendimento, Estoque, Marketing, Venda
+from backend.models.dataroom import Atendimento, Cliente, Estoque, Marketing, Venda
 
 
 @tool
 def query_negative_margin_summary() -> str:
-    """Calcula o volume de pedidos com margem negativa (mc_negativa = True), receita líquida, prejuízo total e os canais mais afetados."""
+    """Calcula o volume de pedidos com margem negativa (mc_negativa = True), receita líquida, prejuízo total, concessões de descontos e potencial de governança de cupons."""
     with SessionLocal() as session:
         stmt = select(
             func.count(Venda.order_id).label("total_pedidos"),
             func.sum(Venda.receita_liquida).label("receita_liquida"),
             func.sum(Venda.custo_frete).label("custo_frete_total"),
             func.sum(func.abs(Venda.margem_contribuicao)).label("prejuizo_total"),
+            func.sum(Venda.desconto_reais).label("desconto_pedidos_negativos"),
         ).where(Venda.mc_negativa == True)
         res = session.execute(stmt).one()
+
+        # Auditoria de descontos globais em toda a base comercial
+        stmt_total_desc = select(
+            func.sum(Venda.desconto_reais).label("desconto_total_global"),
+            func.count(Venda.order_id).filter(Venda.desconto_reais > 0).label("pedidos_com_desconto"),
+        )
+        res_desc = session.execute(stmt_total_desc).one()
+        desc_total_global = float(res_desc.desconto_total_global or 0.0)
+        qtd_com_desconto = int(res_desc.pedidos_com_desconto or 0)
+
+        # Descontos excessivos (>20%) concedidos a clientes não-VIP (is_vip == False)
+        stmt_excess = select(
+            func.sum(
+                Venda.desconto_reais - (Venda.receita_bruta * 0.20)
+            ).label("excesso_desconto_nao_vip")
+        ).select_from(Venda).join(Cliente, Venda.customer_id == Cliente.customer_id)\
+         .where(
+             Cliente.is_vip == False,
+             (Venda.desconto_reais / Venda.receita_bruta) > 0.20,
+         )
+        excesso_brl = float(session.execute(stmt_excess).scalar() or 0.0)
+
+        # Potencial de recuperação líquida com política de teto de cupons e trava (com 20% de tolerância de elasticidade)
+        recuperacao_governanca = round(excesso_brl * 0.80, 2)
 
         # Descobre os principais canais de vazamento de margem
         stmt_canais = (
@@ -24,6 +49,7 @@ def query_negative_margin_summary() -> str:
                 func.count(Venda.order_id).label("qtd_pedidos"),
                 func.sum(func.abs(Venda.margem_contribuicao)).label("prejuizo"),
                 func.sum(Venda.custo_frete).label("frete"),
+                func.sum(Venda.desconto_reais).label("desconto_canal"),
             )
             .where(Venda.mc_negativa == True)
             .group_by(Venda.canal)
@@ -36,6 +62,7 @@ def query_negative_margin_summary() -> str:
                 "pedidos": r.qtd_pedidos,
                 "prejuizo_brl": round(float(r.prejuizo or 0), 2),
                 "frete_brl": round(float(r.frete or 0), 2),
+                "desconto_brl": round(float(r.desconto_canal or 0), 2),
             }
             for r in session.execute(stmt_canais).all()
         ]
@@ -45,6 +72,11 @@ def query_negative_margin_summary() -> str:
                 "pedidos_negativos": res.total_pedidos or 0,
                 "prejuizo_acumulado_brl": round(float(res.prejuizo_total or 0), 2),
                 "custo_frete_pedidos_negativos": round(float(res.custo_frete_total or 0), 2),
+                "desconto_pedidos_negativos_brl": round(float(res.desconto_pedidos_negativos or 0), 2),
+                "desconto_total_global_brl": round(desc_total_global, 2),
+                "pedidos_com_desconto": qtd_com_desconto,
+                "excesso_desconto_nao_vip_brl": round(excesso_brl, 2),
+                "potencial_recuperacao_governanca_descontos_brl": recuperacao_governanca,
                 "top_canais_deficitarios": top_canais,
             },
             ensure_ascii=False,

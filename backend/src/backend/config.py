@@ -23,5 +23,7 @@ def get_llm(temperature: float = 0.1):
         model=MODEL_NAME,
         temperature=temperature,
         api_base=ELOAGENTS_BASE_URL,
-        api_key=ELOAGENTS_API_KEY
+        api_key=ELOAGENTS_API_KEY,
+        timeout=10,
+        max_retries=1,
     )

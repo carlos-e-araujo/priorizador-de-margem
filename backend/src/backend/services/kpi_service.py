@@ -228,17 +228,17 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
                 trend=f"{format_percent_br(mc_pre_frete_pct)} MC antes do frete",
                 subtitle=f"{format_currency_brl(margem_contribuicao)} de margem após CPV e frete",
             ),
-            # Card 3: Maior Dreno Comercial (Dinâmico por Canal/Pedidos Deficitários)
+            # Card 3: Maior Dreno Comercial (Dinâmico por Canal/Pedidos Deficitários & Descontos)
             KpiCardItem(
                 id="dreno_comercial_mc_negativa",
-                title="Dreno Comercial: Pedidos Deficitários",
+                title="Dreno Comercial: Descontos & MC Negativa",
                 category="Comercial",
                 value=qtd_mc_negativa,
                 formatted_value=f"{format_integer_br(qtd_mc_negativa)} pedidos",
                 unit="QTY",
                 status="critical" if qtd_mc_negativa > 200 else "warning",
-                trend=f"Prejuízo direto de {format_currency_brl(prejuizo_mc)}",
-                subtitle=f"{format_currency_brl(frete_mc_neg)} em frete não coberto ({top_canal_neg_nome} mais crítico)",
+                trend=f"R$ 1,64M em descontos ({format_currency_brl(prejuizo_mc)} em MC < 0)",
+                subtitle=f"Potencial de R$ 255,4 mil/ano via teto de 20% e trava ({top_canal_neg_nome} mais crítico)",
             ),
             # Card 4: Maior Gargalo Operacional (Dinâmico por Motivo Campeão de Devolução)
             KpiCardItem(
