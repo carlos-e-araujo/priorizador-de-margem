@@ -157,7 +157,25 @@ export const PrioritizationTable: React.FC = () => {
         cell: (info) => {
           const row = info.row.original;
 
+          const getPilarBadgeStyle = (pilar: string) => {
+            switch (pilar) {
+              case 'Marketing':
+                return 'bg-purple-50 text-purple-700 border-purple-200';
+              case 'CX':
+                return 'bg-blue-50 text-blue-700 border-blue-200';
+              case 'Comercial':
+                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+              case 'Operações':
+                return 'bg-amber-50 text-amber-700 border-amber-200';
+              case 'Estoque':
+                return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+              default:
+                return 'bg-slate-100 text-slate-700 border-slate-200';
+            }
+          };
+
           const getKpiOriginLabel = (originId?: string | null, pilar?: string) => {
+            if (originId === 'dreno_midia_marketing' || pilar === 'Marketing') return 'Mídia & Aquisição';
             if (originId === 'gargalo_suporte_principal' || pilar === 'CX') return 'Atendimento WISMO';
             if (originId === 'dreno_comercial_mc_negativa' || pilar === 'Comercial') return 'Margem Negativa';
             if (originId === 'gargalo_devolucoes' || pilar === 'Operações') return 'Frete Reverso';
@@ -168,7 +186,7 @@ export const PrioritizationTable: React.FC = () => {
           return (
             <div className="max-w-xs sm:max-w-sm space-y-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${getPilarBadgeStyle(row.pilar)}`}>
                   {row.pilar}
                 </span>
                 <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">

@@ -2,7 +2,7 @@ import json
 from langchain_core.tools import tool
 from sqlalchemy import case, desc, func, select
 from backend.database import SessionLocal
-from backend.models.dataroom import Atendimento, Estoque, Venda
+from backend.models.dataroom import Atendimento, Estoque, Marketing, Venda
 
 
 @tool
@@ -222,3 +222,132 @@ def query_stockout_risks() -> str:
             },
             ensure_ascii=False,
         )
+
+
+@tool
+def query_marketing_efficiency_summary() -> str:
+    """Analisa dinamicamente a eficiência de mídia paga e marketing: campanhas deficitárias (ROAS < 1.0), dispersão de ROAS e CAC por canal e oportunidades de realocação orçamentária."""
+    with SessionLocal() as session:
+        # Macro métricas de marketing
+        stmt_macro = select(
+            func.count(Marketing.campanha_id).label("total_campanhas"),
+            func.sum(Marketing.investimento_reais).label("total_investimento"),
+            func.sum(Marketing.receita_gerada).label("total_receita"),
+            func.sum(Marketing.conversoes).label("total_conversoes"),
+            func.sum(case((Marketing.roas < 1.0, 1), else_=0)).label("qtd_deficitarias"),
+            func.sum(case((Marketing.roas < 1.0, Marketing.investimento_reais), else_=0.0)).label("investimento_deficitario"),
+            func.sum(case((Marketing.roas < 1.0, Marketing.receita_gerada), else_=0.0)).label("receita_deficitario"),
+            func.sum(case((Marketing.roas < 1.5, 1), else_=0)).label("qtd_subotimas"),
+            func.sum(case((Marketing.roas < 1.5, Marketing.investimento_reais), else_=0.0)).label("investimento_subotimo"),
+        )
+        res_macro = session.execute(stmt_macro).one()
+
+        tot_campanhas = int(res_macro.total_campanhas or 0)
+        tot_invest = float(res_macro.total_investimento or 0.0)
+        tot_receita = float(res_macro.total_receita or 0.0)
+        tot_conversoes = int(res_macro.total_conversoes or 0)
+
+        roas_global = (tot_receita / tot_invest) if tot_invest > 0 else 0.0
+        cac_global = (tot_invest / tot_conversoes) if tot_conversoes > 0 else 0.0
+
+        qtd_def = int(res_macro.qtd_deficitarias or 0)
+        inv_def = float(res_macro.investimento_deficitario or 0.0)
+        rec_def = float(res_macro.receita_deficitario or 0.0)
+        prejuizo_def = max(0.0, inv_def - rec_def)
+
+        qtd_sub = int(res_macro.qtd_subotimas or 0)
+        inv_sub = float(res_macro.investimento_subotimo or 0.0)
+
+        # Descoberta dinâmica por canal
+        stmt_canais = (
+            select(
+                Marketing.canal,
+                func.count(Marketing.campanha_id).label("qtd_campanhas"),
+                func.sum(Marketing.investimento_reais).label("investimento"),
+                func.sum(Marketing.receita_gerada).label("receita"),
+                func.sum(Marketing.conversoes).label("conversoes"),
+                func.avg(Marketing.ctr_percentual).label("ctr_medio"),
+                func.avg(Marketing.taxa_conversao_pct).label("conversao_media"),
+            )
+            .group_by(Marketing.canal)
+        )
+        rows_canais = session.execute(stmt_canais).all()
+
+        ranking_canais = []
+        for r in rows_canais:
+            inv = float(r.investimento or 0.0)
+            rec = float(r.receita or 0.0)
+            conv = int(r.conversoes or 0)
+            roas_c = (rec / inv) if inv > 0 else 0.0
+            cac_c = (inv / conv) if conv > 0 else 0.0
+
+            ranking_canais.append(
+                {
+                    "canal": r.canal,
+                    "campanhas": int(r.qtd_campanhas or 0),
+                    "investimento_brl": round(inv, 2),
+                    "receita_brl": round(rec, 2),
+                    "roas_real": round(roas_c, 2),
+                    "cac_real": round(cac_c, 2),
+                    "ctr_medio_pct": round(float(r.ctr_medio or 0.0), 2),
+                    "conversao_media_pct": round(float(r.conversao_media or 0.0), 2),
+                }
+            )
+
+        # Ordenar por ROAS real para descobrir dinamicamente os extremos
+        ranking_canais.sort(key=lambda x: x["roas_real"])
+        pior_canal = ranking_canais[0] if ranking_canais else None
+        melhor_canal = ranking_canais[-1] if ranking_canais else None
+
+        # Amostra das piores campanhas individuais com ROAS < 1.0
+        stmt_piores_campanhas = (
+            select(
+                Marketing.campanha_id,
+                Marketing.nome_campanha,
+                Marketing.canal,
+                Marketing.investimento_reais,
+                Marketing.receita_gerada,
+                Marketing.roas,
+            )
+            .where(Marketing.roas < 1.0)
+            .order_by((Marketing.investimento_reais - Marketing.receita_gerada).desc())
+            .limit(5)
+        )
+        amostra_piores = [
+            {
+                "campanha_id": r.campanha_id,
+                "nome": r.nome_campanha,
+                "canal": r.canal,
+                "investimento_brl": round(float(r.investimento_reais or 0.0), 2),
+                "receita_brl": round(float(r.receita_gerada or 0.0), 2),
+                "prejuizo_brl": round(float((r.investimento_reais or 0.0) - (r.receita_gerada or 0.0)), 2),
+                "roas": round(float(r.roas or 0.0), 2),
+            }
+            for r in session.execute(stmt_piores_campanhas).all()
+        ]
+
+        return json.dumps(
+            {
+                "total_campanhas": tot_campanhas,
+                "investimento_total_brl": round(tot_invest, 2),
+                "receita_total_brl": round(tot_receita, 2),
+                "roas_global": round(roas_global, 2),
+                "cac_global_brl": round(cac_global, 2),
+                "campanhas_deficitarias": {
+                    "qtd": qtd_def,
+                    "investimento_queimado_brl": round(inv_def, 2),
+                    "receita_gerada_brl": round(rec_def, 2),
+                    "prejuizo_direto_brl": round(prejuizo_def, 2),
+                },
+                "campanhas_subotimas_roas_sub_1_5": {
+                    "qtd": qtd_sub,
+                    "investimento_brl": round(inv_sub, 2),
+                },
+                "canal_menor_retorno": pior_canal,
+                "canal_maior_retorno": melhor_canal,
+                "ranking_canais_por_roas": ranking_canais,
+                "amostra_piores_campanhas": amostra_piores,
+            },
+            ensure_ascii=False,
+        )
+
