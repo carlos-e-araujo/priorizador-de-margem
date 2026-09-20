@@ -1,6 +1,6 @@
 export type KpiStatus = 'normal' | 'warning' | 'critical';
 export type UnitType = 'BRL' | 'PCT' | 'QTY' | string;
-export type BusinessPillar = 'Comercial' | 'Operações' | 'CX' | 'Estoque' | string;
+export type BusinessPillar = 'Comercial' | 'Operações' | 'Atendimento' | 'Estoque' | string;
 export type HorizonDays = 30 | 60 | 90;
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | string;
 

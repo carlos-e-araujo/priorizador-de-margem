@@ -7,7 +7,7 @@ class KpiCardItem(BaseModel):
 
     id: str = Field(..., description="Identificador único do indicador")
     title: str = Field(..., description="Título dinâmico do card (ex: Margem de Contribuição, Receita Líquida, etc.)")
-    category: str = Field(..., description="Pilar de negócio (Comercial, Operações, CX, Estoque)")
+    category: str = Field(..., description="Pilar de negócio (Comercial, Operações, Atendimento, Estoque)")
     value: float = Field(..., description="Valor numérico calculado deterministicamente")
     formatted_value: str = Field(..., description="Valor formatado para exibição (ex: 'R$ 1.250.000,00' ou '28.5%')")
     unit: str = Field(..., description="Unidade de medida ('BRL', 'PCT', 'QTY')")

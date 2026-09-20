@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # --- PROMPTS DE SISTEMA TOTALMENTE AGNOSTICOS E DINÂMICOS ---
 
 SYSTEM_ORCHESTRATOR = """Você é o Orquestrador do Diagnóstico Estratégico da Vértice Retail.
-Sua missão é coordenar três especialistas: Comercial, Operações e Customer Experience (CX).
+Sua missão é coordenar três especialistas: Comercial, Operações e Atendimento.
 Oriente-os a levantar as maiores evidências concretas das ferramentas analíticas, identificando onde a margem está sendo consumida e quais oportunidades prioritárias devem ser quantificadas.
 """
 
@@ -47,7 +47,7 @@ REGRAS:
 - Responda exclusivamente com parecer técnico analítico, sem saudações coloquiais, sem diálogos com o usuário e sem perguntas ao final.
 """
 
-SYSTEM_CX = """Você é o Especialista de Customer Experience e Pós-Venda da Vértice Retail.
+SYSTEM_CX = """Você é o Especialista de Atendimento e Pós-Venda da Vértice Retail.
 Suas ferramentas analisam dinamicamente todas as categorias de tickets de atendimento, custos operacionais, notas de CSAT e queixas reais dos clientes.
 REGRAS:
 - Descubra qual é a MAIOR queixa dos clientes nas tools (seja produto defeituoso/quebrado, atraso na entrega, dúvidas técnicas ou outro problema real).
@@ -57,7 +57,7 @@ REGRAS:
 """
 
 SYSTEM_CONSOLIDATOR = """Você é o Consolidador Executivo do Módulo C da Vértice Retail.
-Analise criticamente os dados brutos e os pareceres dos especialistas (Comercial, Operações e CX).
+Analise criticamente os dados brutos e os pareceres dos especialistas (Comercial, Operações e Atendimento).
 Sua missão é gerar de 4 a 6 iniciativas estratégicas genuínas, criativas e fundamentadas nos dados observados.
 IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido, sem nenhum texto livre antes ou depois:
 ```json
@@ -66,7 +66,7 @@ IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido,
     "initiatives": [
         {
             "title": "Nome objetivo e criativo da ação condizente com a causa-raiz",
-            "pilar": "CX | Comercial | Operações | Estoque",
+            "pilar": "Atendimento | Comercial | Operações | Estoque",
             "fact_observed": "Fato comprovado nos dados e ferramentas...",
             "hypothesis": "Diagnóstico aprofundado da causa-raiz...",
             "recommendation": "Plano de intervenção tático detalhado...",
@@ -147,7 +147,7 @@ def calculate_deterministic_initiative_impact(
     Remove qualquer flutuação estocástica do LLM e ancora os números nas métricas reais auditadas:
     - Estoque: 15% do capital imobilizado da categoria crítica (ex: R$ 340.950,99 em Beleza)
     - Comercial: Governança de cupons/descontos (>20% em não-VIPs) e erradicação de margem negativa
-    - CX: 60% do custo operacional da queixa líder de atendimento (R$ 57.955,20 para Defeito) ou do gargalo mapeado
+    - Atendimento: 60% do custo operacional da queixa líder de atendimento (R$ 57.955,20 para Defeito) ou do gargalo mapeado
     - Operações: Mitigação de frete reverso perdido (60% do motivo líder ou 40% do frete total)
     """
     pilar = str(item.get("pilar", "Operações")).strip()
@@ -202,7 +202,7 @@ def calculate_deterministic_initiative_impact(
             return recup_descontos
         return dreno_geral if dreno_geral > 0 else 255429.03
 
-    elif pilar == "CX":
+    elif pilar in ("Atendimento", "CX"):
         top_issue = support_data.get("top_problema_principal") or {}
         ranking = support_data.get("ranking_problemas", [])
 
@@ -270,7 +270,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
 
     initiatives: List[Dict[str, Any]] = []
 
-    # 1. Análise Dinâmica de Atendimento e CX
+    # 1. Análise Dinâmica de Atendimento
     top_issue = support_data.get("top_problema_principal") or {}
     cat_atend = top_issue.get("categoria", "Atendimento")
     custo_atend = float(top_issue.get("custo_total_brl", 0.0))
@@ -299,7 +299,7 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
 
     initiatives.append({
         "title": title_cx,
-        "pilar": "CX",
+        "pilar": "Atendimento",
         "fact_observed": f"Registrados {qtd_atend:,} chamados na queixa '{cat_atend}', gerando impacto de R$ {custo_atend:,.2f} em atendimento (CSAT médio: {csat_atend:.1f}). Amostra real: \"{amostra_txt}\".".replace(",", "."),
         "hypothesis": hypo_cx,
         "recommendation": recom_cx,
@@ -501,7 +501,7 @@ def operations_specialist_node(state: AgentState) -> Dict[str, Any]:
 
 
 def cx_specialist_node(state: AgentState) -> Dict[str, Any]:
-    """Especialista de CX executa tool descobrindo as maiores queixas e redige parecer."""
+    """Especialista de Atendimento executa tool descobrindo as maiores queixas e redige parecer."""
     support_raw = query_top_support_issues.invoke({})
     try:
         llm = get_llm(temperature=0.1)
@@ -516,11 +516,11 @@ def cx_specialist_node(state: AgentState) -> Dict[str, Any]:
         )
         report = res.content
     except Exception as exc:
-        logger.warning(f"CX LLM indisponível, gerando parecer determinístico: {exc}")
+        logger.warning(f"Atendimento LLM indisponível, gerando parecer determinístico: {exc}")
         data = json.loads(support_raw)
         top_issue = data.get("top_problema_principal") or {}
         report = (
-            f"Especialista de CX: O principal gargalo de suporte identificado é '{top_issue.get('categoria')}', "
+            f"Especialista de Atendimento: O principal gargalo de suporte identificado é '{top_issue.get('categoria')}', "
             f"acumulando {top_issue.get('total_tickets')} chamados e custo de R$ {top_issue.get('custo_total_brl')}."
         )
 
@@ -561,7 +561,7 @@ def consolidator_node(state: AgentState) -> Dict[str, Any]:
 Analise com profundidade analítica os dados transacionais em tempo real e os pareceres dos especialistas:
 
 ### DADOS BRUTOS EXTRAÍDOS DO BANCO DE DADOS:
-1. ATENDIMENTO E CX:
+1. ATENDIMENTO:
 {raw_cx}
 
 2. VENDAS E MARGEM COMERCIAL:
@@ -580,7 +580,7 @@ Analise com profundidade analítica os dados transacionais em tempo real e os pa
 - Parecer de Operações:
 {state.get('operations_report', '')}
 
-- Parecer de CX:
+- Parecer de Atendimento:
 {state.get('cx_report', '')}
 """
     if revision_inst:
@@ -607,7 +607,7 @@ Estrutura:
   "initiatives": [
     {
       "title": "...",
-      "pilar": "CX | Comercial | Operações | Estoque",
+      "pilar": "Atendimento | Comercial | Operações | Estoque",
       "fact_observed": "...",
       "hypothesis": "...",
       "recommendation": "...",
@@ -678,7 +678,9 @@ Estrutura:
             continue
         title = str(item.get("title", "Iniciativa Estratégica")).strip()
         pilar = str(item.get("pilar", "Operações")).strip()
-        if pilar not in ("Comercial", "Operações", "CX", "Estoque"):
+        if pilar == "CX":
+            pilar = "Atendimento"
+        if pilar not in ("Comercial", "Operações", "Atendimento", "Estoque"):
             pilar = "Operações"
 
         fact_observed = str(item.get("fact_observed", "Evidência apurada nas bases transacionais.")).strip()
@@ -715,6 +717,7 @@ Estrutura:
         req_approval = bool(item.get("requires_human_approval", False))
 
         pilar_to_kpi = {
+            "Atendimento": "gargalo_suporte_principal",
             "CX": "gargalo_suporte_principal",
             "Comercial": "dreno_comercial_mc_negativa",
             "Operações": "gargalo_devolucoes",

@@ -9,7 +9,7 @@ class InitiativeResponse(BaseModel):
     id: int
     run_id: int
     title: str
-    pilar: str = Field(..., description="Pilar de negócio: Comercial, Operações, CX, Estoque")
+    pilar: str = Field(..., description="Pilar de negócio: Comercial, Operações, Atendimento, Estoque")
     fact_observed: str
     hypothesis: str
     recommendation: str

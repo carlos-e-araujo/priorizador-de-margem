@@ -115,7 +115,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
         row_cat_dev = session.execute(stmt_top_cat_dev).first()
         top_cat_dev_nome = row_cat_dev[0] if row_cat_dev else "Todas"
 
-        # 4. Descoberta Dinâmica do Maior Gargalo de Atendimento (CX)
+        # 4. Descoberta Dinâmica do Maior Gargalo de Atendimento
         stmt_total_tickets = select(func.count(Atendimento.ticket_id)).select_from(Atendimento)
         total_tickets_geral = session.execute(stmt_total_tickets).scalar() or 1
 
@@ -224,7 +224,7 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
             KpiCardItem(
                 id="gargalo_suporte_principal",
                 title=f"Gargalo de Suporte: {top_atend_cat}",
-                category="CX",
+                category="Atendimento",
                 value=round(top_atend_custo, 2),
                 formatted_value=format_currency_brl(top_atend_custo),
                 unit="BRL",

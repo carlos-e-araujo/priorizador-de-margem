@@ -307,7 +307,7 @@ def export_audit_markdown_endpoint(
         "",
         "## 4. Matriz de Priorização Multicritério das Iniciativas",
         "",
-        "As iniciativas identificadas pelos especialistas de negócio (Comercial, Operações, CX e Estoque) foram submetidas à fórmula matemática de ranqueamento:",
+        "As iniciativas identificadas pelos especialistas de negócio (Comercial, Operações, Atendimento e Estoque) foram submetidas à fórmula matemática de ranqueamento:",
         "",
         r"$$\text{Score} = \frac{\text{Impacto Estimado (R\$)}}{\text{Esforço (1-3)} \times \text{Risco (1-3)}} \times \text{Fator de Horizonte (30d=1.30, 60d=1.10, 90d=1.00)}$$",
         "",

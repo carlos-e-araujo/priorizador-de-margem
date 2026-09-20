@@ -28,7 +28,7 @@ flowchart LR
    - Orquestração multiagente com **LangGraph**:
      - *Especialista Comercial & Pricing*: caça pedidos com margem negativa e desequilíbrios de frete grátis.
      - *Especialista de Operações & Logística*: rastreia o motivo campeão de devoluções e frete reverso.
-     - *Especialista de Customer Experience (CX)*: identifica o gargalo líder de chamados de suporte (*WISMO*) e atrito pós-venda.
+     - *Especialista de Atendimento & Pós-Venda*: identifica o gargalo líder de chamados de suporte (*WISMO*) e atrito pós-venda.
      - *Consolidador Executivo*: gera iniciativas com fórmula formal de pontuação:
        $$\text{Score} = \frac{\text{Impacto Estimado (R\$)}}{\text{Esforço} \times \text{Risco}} \times \text{Fator de Horizonte}$$
        *(30 dias: 1.30 · 60 dias: 1.10 · 90 dias: 1.00)*

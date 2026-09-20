@@ -161,6 +161,7 @@ export const PrioritizationTable: React.FC = () => {
             switch (pilar) {
               case 'Marketing':
                 return 'bg-purple-50 text-purple-700 border-purple-200';
+              case 'Atendimento':
               case 'CX':
                 return 'bg-blue-50 text-blue-700 border-blue-200';
               case 'Comercial':
@@ -176,7 +177,7 @@ export const PrioritizationTable: React.FC = () => {
 
           const getKpiOriginLabel = (originId?: string | null, pilar?: string) => {
             if (originId === 'dreno_midia_marketing' || pilar === 'Marketing') return 'Mídia & Aquisição';
-            if (originId === 'gargalo_suporte_principal' || pilar === 'CX') return 'Atendimento WISMO';
+            if (originId === 'gargalo_suporte_principal' || pilar === 'Atendimento' || pilar === 'CX') return 'Atendimento WISMO';
             if (originId === 'dreno_comercial_mc_negativa' || pilar === 'Comercial') return 'Margem Negativa';
             if (originId === 'gargalo_devolucoes' || pilar === 'Operações') return 'Frete Reverso';
             if (originId === 'vulnerabilidade_estoque' || pilar === 'Estoque') return 'Ruptura Estoque';

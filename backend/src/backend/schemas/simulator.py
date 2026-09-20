@@ -7,7 +7,7 @@ class SimulatorLever(BaseModel):
 
     id: str = Field(..., description="Identificador único da alavanca operacional")
     title: str = Field(..., description="Nome da alavanca descoberto pelo motor")
-    pilar: str = Field(..., description="Pilar de negócio associado (Comercial, Operações, CX, Estoque)")
+    pilar: str = Field(..., description="Pilar de negócio associado (Comercial, Operações, Atendimento, Estoque)")
     description: str = Field(..., description="Descrição da ação de sensibilidade")
     current_value_pct: float = Field(..., description="Valor inicial percentual padrão (ex: 0.15 = 15%)")
     min_pct: float = Field(0.0, description="Limite mínimo do slider")
