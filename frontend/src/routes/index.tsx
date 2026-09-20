@@ -9,7 +9,7 @@ const IndexPage: React.FC = () => {
   return (
     <div className="space-y-10 pb-12">
       {/* 1. Diagnóstico Determinístico Cardinal (Hero Section) */}
-      <section>
+      <section id="diagnostico" className="scroll-mt-24">
         <KpiCardContainer />
       </section>
 
@@ -17,7 +17,7 @@ const IndexPage: React.FC = () => {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 2. Motor de Priorização Multiagente com Reflexão Crítica */}
-      <section className="space-y-3">
+      <section id="esteira" className="scroll-mt-24 space-y-3">
         <div>
           <h2 className="text-base font-semibold text-slate-900 tracking-tight">
             Esteira de Decisão Executiva & Matriz de Priorização
@@ -33,7 +33,7 @@ const IndexPage: React.FC = () => {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 3. Simulador de Sensibilidade de Alavancas Operacionais */}
-      <section>
+      <section id="simulador" className="scroll-mt-24">
         <DynamicSliderPanel />
       </section>
     </div>
