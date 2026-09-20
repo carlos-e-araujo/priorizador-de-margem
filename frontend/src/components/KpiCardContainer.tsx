@@ -17,14 +17,14 @@ export const KpiCardContainer: React.FC = () => {
       {/* Header da Seção de KPIs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+          <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600">
             <Activity className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white tracking-tight">
+            <h2 className="text-base font-semibold text-slate-900 tracking-tight">
               Diagnóstico Determinístico de Operações & Margem
             </h2>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-slate-500">
               Métricas agregadas auditáveis sobre a base transacional (Dataroom Vértice)
             </p>
           </div>
@@ -32,28 +32,28 @@ export const KpiCardContainer: React.FC = () => {
 
         <div className="flex items-center gap-3">
           {data?.period && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300">
-              Período: <span className="text-emerald-400 font-mono">{data.period}</span>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 shadow-xs">
+              Período: <span className="text-emerald-700 font-mono font-semibold">{data.period}</span>
             </span>
           )}
           <button
             onClick={() => refetch()}
             disabled={isFetching}
             title="Atualizar KPIs"
-            className="p-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white transition disabled:opacity-50"
+            className="p-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 transition disabled:opacity-50 shadow-xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin text-emerald-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin text-emerald-600' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Faixa de Linhagem de Dados e Decisão Executiva */}
-      <div className="px-3.5 py-2 rounded-lg bg-neutral-900/60 border border-neutral-800/80 text-[11px] text-neutral-400 flex items-center justify-between gap-2">
+      <div className="px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between gap-2 shadow-xs">
         <span className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span><strong>Fluxo de Decisão Conectado:</strong> Cada anomalia crítica diagnosticada abaixo é investigada pelos especialistas da <strong>Esteira Executiva</strong> e modulada no <strong>Simulador de Sensibilidade</strong>.</span>
         </span>
-        <span className="hidden sm:inline font-mono text-[10px] text-neutral-400 shrink-0">
+        <span className="hidden sm:inline font-mono text-[10px] text-slate-400 shrink-0">
           Diagnóstico ➔ Esteira ➔ Simulador
         </span>
       </div>

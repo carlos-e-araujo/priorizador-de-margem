@@ -40,17 +40,17 @@ export const ApprovalSwitch: React.FC<ApprovalSwitchProps> = ({
             ? 'Iniciativa aprovada. Clique para recusar.'
             : 'Iniciativa recusada. Clique para aprovar novamente.'
         }
-        className={`relative inline-flex shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 ${trackClass} ${
+        className={`relative inline-flex shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${trackClass} ${
           isApproved
-            ? 'bg-emerald-600 hover:bg-emerald-500 focus-visible:ring-emerald-500 shadow-sm shadow-emerald-950'
-            : 'bg-rose-600 hover:bg-rose-500 focus-visible:ring-rose-500 shadow-sm shadow-rose-950'
+            ? 'bg-emerald-600 hover:bg-emerald-500 focus-visible:ring-emerald-500 shadow-xs shadow-emerald-600/30'
+            : 'bg-rose-600 hover:bg-rose-500 focus-visible:ring-rose-500 shadow-xs shadow-rose-600/30'
         } ${disabled || isPending ? 'opacity-60 cursor-not-allowed' : ''}`}
       >
         <span
           className={`pointer-events-none inline-flex transform items-center justify-center rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${knobClass} ${translateClass}`}
         >
           {isPending ? (
-            <Loader2 className={`${iconClass} text-neutral-600 animate-spin`} />
+            <Loader2 className={`${iconClass} text-slate-600 animate-spin`} />
           ) : isApproved ? (
             <Check className={`${iconClass} text-emerald-600`} />
           ) : (
@@ -62,7 +62,7 @@ export const ApprovalSwitch: React.FC<ApprovalSwitchProps> = ({
       {showLabel && (
         <span
           className={`text-[10px] font-bold uppercase tracking-wider select-none ${
-            isApproved ? 'text-emerald-400' : 'text-rose-400'
+            isApproved ? 'text-emerald-700' : 'text-rose-700'
           }`}
         >
           {isApproved ? 'Aprovada' : 'Recusada'}

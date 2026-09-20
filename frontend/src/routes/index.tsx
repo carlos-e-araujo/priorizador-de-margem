@@ -14,15 +14,15 @@ const IndexPage: React.FC = () => {
       </section>
 
       {/* Divisor Executivo */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-neutral-800 to-transparent" />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 2. Motor de Priorização Multiagente com Reflexão Crítica */}
       <section className="space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-white tracking-tight">
+          <h2 className="text-base font-semibold text-slate-900 tracking-tight">
             Esteira de Decisão Executiva & Matriz de Priorização
           </h2>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-slate-500">
             Iniciativas investigadas por agentes especialistas (Comercial, Operações, CX) e validadas pela rubrica do CFO
           </p>
         </div>
@@ -30,7 +30,7 @@ const IndexPage: React.FC = () => {
       </section>
 
       {/* Divisor Executivo */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-neutral-800 to-transparent" />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 3. Simulador de Sensibilidade de Alavancas Operacionais */}
       <section>
