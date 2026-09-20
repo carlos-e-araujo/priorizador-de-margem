@@ -28,7 +28,7 @@ const IndexPage: React.FC = () => {
               Esteira de Decisão Executiva & Matriz de Priorização
             </h2>
             <p className="text-xs text-slate-500">
-              Iniciativas investigadas por agentes especialistas (Comercial, Operações, CX) e validadas pela rubrica do CFO
+              Iniciativas investigadas por agentes especialistas (Comercial, Operações, CX) e validadas por agente crítico financeiro independente
             </p>
           </div>
         </div>

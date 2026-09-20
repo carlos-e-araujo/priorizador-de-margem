@@ -80,7 +80,7 @@ IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido,
 ```
 """
 
-SYSTEM_CRITIC_CFO = """Você é o Diretor Financeiro (CFO) e Crítico Independente da Vértice Retail.
+SYSTEM_CRITIC_CFO = """Você é o Agente Crítico Financeiro e Avaliador Independente de Governança da Vértice Retail.
 Avalie o pacote de iniciativas gerado contra a seguinte rubrica estrita:
 1. Evidência quantitativa: todas as recomendações possuem fatos e números comprovados pelas tools?
 2. Causalidade: a relação entre o problema observado e a solução proposta faz sentido econômico?
@@ -464,7 +464,7 @@ Analise com profundidade analítica os dados transacionais em tempo real e os pa
 {state.get('cx_report', '')}
 """
     if revision_inst:
-        prompt_content += f"\n### DIRETRIZES DE REVISÃO DO CFO:\n{revision_inst}\n"
+        prompt_content += f"\n### DIRETRIZES DE REVISÃO DO VALIDADOR FINANCEIRO:\n{revision_inst}\n"
 
     prompt_content += """
 ### DIRETRIZES DE INTELIGÊNCIA:
@@ -665,7 +665,7 @@ def critic_cfo_node(state: AgentState) -> Dict[str, Any]:
             revision_inst = parsed.get("revision_instructions", "")
             critic_verdict = "APPROVED" if critic_approved else "REJECTED"
     except Exception as exc:
-        logger.warning(f"Critic LLM indisponível, emitindo parecer CFO aprovado por default: {exc}")
+        logger.warning(f"Critic LLM indisponível, emitindo parecer crítico financeiro aprovado por default: {exc}")
         critic_score = 88.0
         critic_approved = True
         critic_verdict = "APPROVED"
@@ -734,7 +734,7 @@ def save_to_db_node(state: AgentState) -> Dict[str, Any]:
 
 
 def build_agent_graph():
-    """Constrói o grafo StateGraph com execução paralela dos especialistas e reflexão do CFO."""
+    """Constrói o grafo StateGraph com execução paralela dos especialistas e reflexão do Agente Crítico Financeiro."""
     builder = StateGraph(AgentState)
 
     builder.add_node("orchestrator", orchestrator_node)

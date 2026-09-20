@@ -328,10 +328,10 @@ export const PrioritizationTable: React.FC = () => {
             <button
               onClick={() => openAuditDrawer(runData.id)}
               className="flex items-center gap-1.5 text-slate-700 hover:text-emerald-700 transition group cursor-pointer text-left"
-              title="Clique para abrir auditoria detalhada e parecer do CFO"
+              title="Clique para abrir auditoria detalhada e parecer do validador financeiro"
             >
               <ShieldCheck className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
-              <span>Parecer CFO:</span>
+              <span>Validador Financeiro:</span>
               <span className="font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 group-hover:bg-emerald-100 group-hover:border-emerald-300 transition">
                 {runData.critic_verdict} ({runData.critic_score}/100)
               </span>
@@ -397,7 +397,7 @@ export const PrioritizationTable: React.FC = () => {
             onClick={() => openAuditDrawer(runData?.id)}
             disabled={!runData}
             className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-xs disabled:opacity-50 shrink-0"
-            title="Ver rastreabilidade de dados, memória de cálculo e parecer do CFO"
+            title="Ver rastreabilidade de dados, memória de cálculo e parecer da auditoria financeira"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Auditoria & Governança</span>

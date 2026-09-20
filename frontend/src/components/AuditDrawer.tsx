@@ -58,7 +58,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ isOpen, onClose, runId
     if (score >= 75) {
       return {
         bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        text: 'Aprovado pelo CFO',
+        text: 'Aprovado na Rubrica',
         color: 'text-emerald-600',
       };
     }
@@ -97,7 +97,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ isOpen, onClose, runId
                 Rastreabilidade e Parecer Crítico (Run #{runId ?? '--'})
               </h2>
               <p className="text-xs text-slate-500">
-                Memória de cálculo, evidências SQL determinísticas e rubrica do Agente CFO
+                Memória de cálculo, evidências SQL determinísticas e rubrica do Agente Crítico Financeiro
               </p>
             </div>
 
@@ -133,10 +133,10 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ isOpen, onClose, runId
               </div>
             ) : data ? (
               <>
-                {/* Score da Rubrica do CFO */}
+                {/* Score da Rubrica Financeira */}
                 <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
                   <div>
-                    <span className="text-xs font-medium text-slate-500">Nota da Rubrica CFO</span>
+                    <span className="text-xs font-medium text-slate-500">Nota da Rubrica Financeira</span>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className={`text-3xl font-extrabold font-mono ${scoreBadge.color}`}>
                         {data.critic_score}
@@ -157,18 +157,18 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ isOpen, onClose, runId
                   </div>
                 </div>
 
-                {/* Parecer Textual do Agente CFO */}
+                {/* Parecer Textual do Agente Crítico Financeiro */}
                 <div className="p-5 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
                     <FileCheck2 className="w-4 h-4 text-emerald-600" />
-                    Parecer Formal do Agente Crítico Financeiro (CFO)
+                    Parecer Formal do Agente Crítico Financeiro
                   </div>
                   <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
                     {data.summary || data.cfo_critique || 'Nenhum parecer textual registrado.'}
                   </p>
                 </div>
 
-                {/* Critérios da Rubrica do CFO */}
+                {/* Critérios da Rubrica Financeira */}
                 {data.rubric_criteria && data.rubric_criteria.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-700">

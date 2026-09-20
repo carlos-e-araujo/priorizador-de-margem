@@ -82,7 +82,7 @@ def _build_default_rubric(
     top_motivo_dev: str = "Devoluções Gerais",
     top_canal_neg: str = "Checkout Geral",
 ) -> list[RubricCriterion]:
-    """Gera o checklist de avaliação da rubrica financeira estrita do CFO, calibrando notas e descrições com os dados reais."""
+    """Gera o checklist de avaliação da rubrica financeira estrita do Agente Crítico Financeiro, calibrando notas e descrições com os dados reais."""
     base_score = max(0.0, min(100.0, score))
     crit1_score = round(min(100.0, base_score * 1.08), 1)
     crit2_score = round(min(100.0, base_score * 1.02), 1)
@@ -122,7 +122,7 @@ def get_audit_run_endpoint(
     run_id: int,
     db: Session = Depends(get_db),
 ) -> AuditRunDetailResponse:
-    """Retorna os dados de rastreabilidade, parecer do Agente CFO, notas da rubrica
+    """Retorna os dados de rastreabilidade, parecer do Agente Crítico Financeiro, notas da rubrica
 
     e consultas SQL executadas para um determinado ciclo de priorização.
     """
@@ -184,7 +184,7 @@ def get_audit_run_endpoint(
             critic_score=critic_score,
             total_ebitda_potential=run.total_ebitda_potential or 0.0,
             formatted_ebitda_potential=format_currency_brl(run.total_ebitda_potential or 0.0),
-            summary=run.summary or f"Plano executivo aprovado pelo CFO. As oportunidades priorizam a contenção de '{top_atend_cat}', devoluções por '{top_motivo_dev}' e estancamento de margem negativa em '{top_canal_neg}'.",
+            summary=run.summary or f"Plano executivo homologado pelo Agente Crítico Financeiro. As oportunidades priorizam a contenção de '{top_atend_cat}', devoluções por '{top_motivo_dev}' e estancamento de margem negativa em '{top_canal_neg}'.",
             rubric_criteria=rubric,
             sql_evidences=evidences,
             initiatives_count=len(initiatives_db),
@@ -243,7 +243,7 @@ def export_audit_markdown_endpoint(
         f"> **Organização:** Vértice Retail S.A.  ",
         f"> **Identificador do Ciclo:** Run #{run_data.run_id}  ",
         f"> **Data de Emissão:** {now_str}  ",
-        f"> **Agente Crítico Financeiro (CFO):** {run_data.critic_verdict} (Nota: {run_data.critic_score}/100)  ",
+        f"> **Agente Crítico Financeiro:** {run_data.critic_verdict} (Nota: {run_data.critic_score}/100)  ",
         f"> **Potencial Total de EBITDA Mapeado:** {run_data.formatted_ebitda_potential}  ",
         "",
         "---",
@@ -265,7 +265,7 @@ def export_audit_markdown_endpoint(
         "",
         "---",
         "",
-        "## 2. Parecer do Agente Crítico Financeiro (CFO) & Rubrica de Avaliação",
+        "## 2. Parecer do Agente Crítico Financeiro & Rubrica de Avaliação",
         "",
         f"**Veredito Oficial:** `{run_data.critic_verdict}`  ",
         f"**Nota Consolidada da Rubrica:** **{run_data.critic_score} / 100,0**  ",

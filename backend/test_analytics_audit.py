@@ -97,7 +97,7 @@ def run_tests():
     assert "rubric_criteria" in audit_data
     assert "sql_evidences" in audit_data
     print(f"✓ GET /api/v1/audit/run/1: {res.status_code} ({dt:.2f}ms)")
-    print(f"   - Parecer CFO: {audit_data['critic_verdict']} (Score: {audit_data['critic_score']}/100)")
+    print(f"   - Parecer Validador Financeiro: {audit_data['critic_verdict']} (Score: {audit_data['critic_score']}/100)")
     print(f"   - Critérios da Rubrica: {len(audit_data['rubric_criteria'])} itens")
     print(f"   - Evidências SQL determinísticas: {len(audit_data['sql_evidences'])} queries")
 
@@ -110,7 +110,7 @@ def run_tests():
     assert "attachment" in res.headers["content-disposition"]
     md_content = res.text
     assert "ARTEFATO DE PROCESSO" in md_content
-    assert "Agente Crítico Financeiro (CFO)" in md_content
+    assert "Agente Crítico Financeiro" in md_content
     assert "Matriz de Evidências Rastreáveis" in md_content
     print(f"✓ GET /api/v1/audit/export/1: {res.status_code} ({dt:.2f}ms) | {len(md_content)} bytes exportados")
 
