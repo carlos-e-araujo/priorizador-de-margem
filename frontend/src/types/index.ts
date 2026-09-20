@@ -85,7 +85,9 @@ export interface SimulatorRunRequest {
 export interface SimulatorRunResponse {
   delta_ebitda_brl: number;
   formatted_delta_ebitda?: string;
-  payback_months: number;
+  monthly_ebitda_brl?: number;
+  formatted_monthly_ebitda?: string;
+  payback_months?: number;
   impact_by_lever: Record<string, number>;
   details_by_lever?: Array<{
     id: string;

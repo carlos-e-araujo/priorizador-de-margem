@@ -29,10 +29,10 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
   const getEffortText = (effort?: number) => {
-    if (effort === 1) return { label: 'Baixo (1)', cost: 'R$ 15.000 setup' };
-    if (effort === 2) return { label: 'Médio (2)', cost: 'R$ 35.000 setup' };
-    if (effort === 3) return { label: 'Alto (3)', cost: 'R$ 60.000 setup' };
-    return { label: 'Estimado', cost: 'Setup variável' };
+    if (effort === 1) return { label: 'Baixo', desc: 'Curto Prazo', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    if (effort === 2) return { label: 'Médio', desc: 'Médio Prazo', badge: 'bg-blue-50 text-blue-700 border-blue-200' };
+    if (effort === 3) return { label: 'Alto', desc: 'Estruturante', badge: 'bg-amber-50 text-amber-700 border-amber-200' };
+    return { label: 'Estimado', desc: 'Operacional', badge: 'bg-slate-50 text-slate-700 border-slate-200' };
   };
 
   const effortInfo = getEffortText(lever.effort_level);
@@ -127,22 +127,25 @@ export const ScenarioSlider: React.FC<ScenarioSliderProps> = ({
         </div>
 
         <div className="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-          <span className="text-[11px] font-medium text-slate-500">Setup de Implantação</span>
+          <span className="text-[11px] font-medium text-slate-500">Captura de Cenário</span>
           <p className="text-xs font-semibold font-mono text-slate-800 mt-0.5">
             {isRejected ? (
-              <span className="text-slate-400 line-through">Isento (Recusada)</span>
+              <span className="text-slate-400 line-through">0% (Recusada)</span>
             ) : (
-              effortInfo.cost
+              <span className="text-emerald-700 font-bold">{Math.round(scenarioFactor * 100)}% efetivo</span>
             )}
           </p>
         </div>
       </div>
 
-      {/* Rodapé: Detalhes de Esforço e Governança */}
+      {/* Rodapé: Detalhes de Esforço Qualitativo e Governança */}
       <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
           <Sparkles className="w-3 h-3 text-slate-400" />
-          Esforço: <strong className="text-slate-700">{effortInfo.label}</strong>
+          <span>Esforço:</span>
+          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${effortInfo.badge}`}>
+            {effortInfo.label} · {effortInfo.desc}
+          </span>
         </span>
         <span className="font-medium">
           {isApproved ? (

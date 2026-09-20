@@ -65,16 +65,13 @@ Sempre que precisar inicializar, testar ou compilar o projeto, execute os comand
 - **Simulador de Sensibilidade:** 
   - As alavancas do simulador **DEVEM ser consumidas 1:1 da esteira de priorização ativa** (`PrioritizationRun` e `Initiative`).
   - O `baseline_cost_brl` deve refletir o valor real apurado nas tabelas (sem arredondamentos arbitrários de LLMs).
-  - O custo de setup para o cálculo do Payback deve ser calculado dinamicamente a partir dos níveis de esforço reais das iniciativas ativas:
-    - Esforço 1 = R$ 15.000,00
-    - Esforço 2 = R$ 35.000,00
-    - Esforço 3 = R$ 60.000,00
+  - Sem custos de setup inventados: a geração de caixa mensal é calculada de forma 100% determinística ($\Delta \text{EBITDA} \div 12$), sem números arbitrários de capex.
 
 ### 3.2. Linhagem de Decisão Contínua (Diagnóstico ➔ Esteira ➔ Simulador)
 - Todo card de anomalia crítica do Diagnóstico possui um `kpi_origin_id` correspondente.
 - As iniciativas da Esteira carregam o `kpi_origin_id` para manter rastreabilidade explícita (`🎯 Alvo: [Card]`).
 - Quando uma iniciativa tiver seu status alterado via `PATCH /initiatives/{id}/status`:
-  - Se `REJECTED`: o ganho no simulador **DEVE ser zerado (R$ 0,00)**, o slider desabilitado e seu custo de setup retirado do Payback.
+  - Se `REJECTED`: o ganho no simulador **DEVE ser zerado (R$ 0,00)** e o card/slider desabilitado.
   - O TanStack Query no frontend **DEVE invalidar simultaneamente**:
     - `['prioritization-latest']`
     - `['simulator-levers']`

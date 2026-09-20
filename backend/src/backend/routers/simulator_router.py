@@ -24,12 +24,12 @@ def get_levers_endpoint(db: Session = Depends(get_db)) -> SimulatorConfigRespons
     return get_active_levers(db=db)
 
 
-@router.post("/simulate", response_model=SimulatorRunResponse, summary="Recalcula em tempo real o Delta EBITDA e Payback")
+@router.post("/simulate", response_model=SimulatorRunResponse, summary="Recalcula em tempo real o Delta EBITDA e Ganho Mensal")
 def simulate_endpoint(
     payload: SimulatorRunRequest,
     db: Session = Depends(get_db),
 ) -> SimulatorRunResponse:
-    """Recalcula instantaneamente o Delta EBITDA potencial anual e o tempo estimado de payback
+    """Recalcula instantaneamente o Delta EBITDA potencial anual e o incremento mensal no caixa
 
     aplicando os percentuais de ajuste dos sliders sobre a volumetria real do banco SQLite.
     """

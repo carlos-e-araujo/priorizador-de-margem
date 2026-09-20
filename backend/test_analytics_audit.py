@@ -80,10 +80,10 @@ def run_tests():
     assert res.status_code == 200, f"Simulator Simulate failed: {res.text}"
     sim_data = res.json()
     assert "delta_ebitda_brl" in sim_data
-    assert "payback_months" in sim_data
+    assert "monthly_ebitda_brl" in sim_data
     print(f"✓ POST /api/v1/simulator/simulate: {res.status_code} ({dt:.2f}ms)")
     print(f"   - Delta EBITDA Total: {sim_data['formatted_delta_ebitda']}")
-    print(f"   - Payback Estimado: {sim_data['payback_months']} meses")
+    print(f"   - Incremento Mensal no Caixa: {sim_data.get('formatted_monthly_ebitda')} (+R$ {sim_data['monthly_ebitda_brl']:,.2f}/mês)")
     for det in sim_data["details_by_lever"]:
         print(f"     * {det['title']}: +{det['formatted_gain']} (meta: {det['target_pct']}%)")
     assert dt < 50, f"Latência do Simulador excedeu 50ms: {dt:.2f}ms"

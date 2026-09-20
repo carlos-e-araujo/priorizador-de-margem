@@ -15,12 +15,6 @@ from backend.services.kpi_service import format_currency_brl
 
 logger = logging.getLogger(__name__)
 
-# Custos parametrizados de setup/implementação por nível de esforço
-EFFORT_SETUP_COSTS = {
-    1: 15_000.0,  # Esforço 1 (Baixo / Quick Win): R$ 15k
-    2: 35_000.0,  # Esforço 2 (Médio): R$ 35k
-    3: 60_000.0,  # Esforço 3 (Alto): R$ 60k
-}
 
 
 def get_active_levers(db: Optional[Session] = None) -> SimulatorConfigResponse:
@@ -98,7 +92,7 @@ def calculate_simulation(
     setup_cost_brl: Optional[float] = None,
     db: Optional[Session] = None,
 ) -> SimulatorRunResponse:
-    """Calcula deterministicamente o Delta EBITDA anual e o Payback em meses
+    """Calcula deterministicamente o Delta EBITDA anual e o ganho mensal no caixa
 
     baseando-se estritamente nas iniciativas ativas da esteira e no status de aprovação executiva.
     """
@@ -108,12 +102,11 @@ def calculate_simulation(
     delta_ebitda_total = 0.0
     impact_by_lever: dict[str, float] = {}
     details: list[dict] = []
-    total_dynamic_setup = 0.0
 
     for lever in levers:
         is_rejected = lever.approval_status == "REJECTED"
 
-        # Se rejeitada pelo C-Level, o ganho é travado em 0.0 e seu custo de setup é excluído
+        # Se rejeitada pelo C-Level, o ganho é travado em 0.0
         if is_rejected:
             applied_pct = 0.0
             gain_brl = 0.0
@@ -128,10 +121,6 @@ def calculate_simulation(
 
             applied_pct = max(lever.min_pct, min(lever.max_pct, float(raw_pct)))
             gain_brl = round(lever.baseline_cost_brl * applied_pct, 2)
-
-            # Acumula o custo de setup apenas para iniciativas ativas/aprovadas
-            effort_cost = EFFORT_SETUP_COSTS.get(lever.effort_level, 25_000.0)
-            total_dynamic_setup += effort_cost
 
         impact_by_lever[lever.id] = gain_brl
         delta_ebitda_total += gain_brl
@@ -156,24 +145,14 @@ def calculate_simulation(
         )
 
     delta_ebitda_total = round(delta_ebitda_total, 2)
-
-    # Payback calculado sobre o custo de setup dinâmico decorrente do esforço das iniciativas
-    effective_setup = (
-        setup_cost_brl
-        if setup_cost_brl is not None and setup_cost_brl > 0
-        else max(total_dynamic_setup, 10_000.0)
-    )
-
-    monthly_gain = delta_ebitda_total / 12.0
-    if monthly_gain > 0:
-        payback_months = round(effective_setup / monthly_gain, 1)
-    else:
-        payback_months = 99.9
+    monthly_ebitda = round(delta_ebitda_total / 12.0, 2)
 
     return SimulatorRunResponse(
         delta_ebitda_brl=delta_ebitda_total,
         formatted_delta_ebitda=format_currency_brl(delta_ebitda_total),
-        payback_months=payback_months,
+        monthly_ebitda_brl=monthly_ebitda,
+        formatted_monthly_ebitda=format_currency_brl(monthly_ebitda),
+        payback_months=None,
         impact_by_lever=impact_by_lever,
         details_by_lever=details,
     )

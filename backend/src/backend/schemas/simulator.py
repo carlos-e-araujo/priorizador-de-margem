@@ -30,7 +30,7 @@ class SimulatorRunRequest(BaseModel):
     """Payload para recálculo dinâmico de sensibilidade dos sliders."""
 
     adjustments: dict[str, float] = Field(..., description="Dicionário dinâmico { lever_id: target_pct }")
-    setup_cost_brl: Optional[float] = Field(None, description="Custo opcional de setup operacional para payback")
+    setup_cost_brl: Optional[float] = Field(None, description="Custo opcional de setup operacional (descontinuado)")
 
 
 class SimulatorRunResponse(BaseModel):
@@ -38,6 +38,8 @@ class SimulatorRunResponse(BaseModel):
 
     delta_ebitda_brl: float = Field(..., description="Total recalculado de ganho anual em EBITDA")
     formatted_delta_ebitda: str = Field("", description="Total de ganho formatado em moeda (ex: 'R$ 485.200,00')")
-    payback_months: float = Field(..., description="Tempo estimado de retorno do investimento em meses")
+    monthly_ebitda_brl: float = Field(0.0, description="Incremento médio mensal no caixa operacional (Delta EBITDA / 12)")
+    formatted_monthly_ebitda: str = Field("", description="Incremento médio mensal formatado em moeda")
+    payback_months: Optional[float] = Field(None, description="Tempo estimado de payback (descontinuado)")
     impact_by_lever: dict[str, float] = Field(default_factory=dict, description="Detalhamento financeiro por alavanca { lever_id: ganho_brl }")
     details_by_lever: list[dict] = Field(default_factory=list, description="Detalhamento estruturado com títulos e ganhos")

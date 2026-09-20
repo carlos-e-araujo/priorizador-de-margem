@@ -120,12 +120,12 @@ export const DynamicSliderPanel: React.FC = () => {
             Simulador de Sensibilidade & Alavancas Operacionais
           </h2>
           <p className="text-xs text-slate-500">
-            Projeção determinística de impacto no EBITDA e Payback conforme cenários de execução
+            Projeção determinística de impacto anual e mensal no EBITDA conforme cenários de execução
           </p>
         </div>
       </div>
 
-      {/* 2. Card de Projeção Executiva (Delta EBITDA & Payback) */}
+      {/* 2. Card de Projeção Executiva (Delta EBITDA & Geração Mensal) */}
       <div className="p-5 rounded-xl bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 border border-emerald-200 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between border-b border-emerald-100 pb-3 gap-2">
           <div className="flex items-center gap-2">
@@ -146,11 +146,11 @@ export const DynamicSliderPanel: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Delta EBITDA */}
+          {/* Delta EBITDA Anual */}
           <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-              <span>EBITDA Adicionado ao Caixa</span>
+              <span>EBITDA Adicionado ao Caixa (Anual)</span>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">
               {simulationResult?.delta_ebitda_brl !== undefined
@@ -162,19 +162,21 @@ export const DynamicSliderPanel: React.FC = () => {
             </p>
           </div>
 
-          {/* Payback */}
+          {/* Geração Mensal no Caixa */}
           <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Payback Estimado</span>
+              <Clock className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Geração Mensal no Caixa</span>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              {simulationResult?.payback_months !== undefined
-                ? `${simulationResult.payback_months.toFixed(1)} meses`
+              {simulationResult?.monthly_ebitda_brl !== undefined
+                ? `+${formatCurrency(simulationResult.monthly_ebitda_brl)}/mês`
+                : simulationResult?.delta_ebitda_brl !== undefined
+                ? `+${formatCurrency(simulationResult.delta_ebitda_brl / 12)}/mês`
                 : '...'}
             </div>
             <p className="text-[11px] text-slate-500">
-              Retorno sobre o custo de setup dinâmico dos esforços das iniciativas ativas
+              Incremento médio mensal no caixa operacional (Δ EBITDA ÷ 12)
             </p>
           </div>
         </div>

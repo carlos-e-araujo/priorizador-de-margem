@@ -36,12 +36,12 @@ flowchart LR
 
 3. **Governança C-Level Ativa com Efeito Imediato:**
    - Permite homologar (`Homologada`) ou rejeitar (`Rejeitada`) iniciativas na esteira.
-   - A rejeição zera imediatamente o ganho no EBITDA daquela iniciativa e remove seu custo de setup da conta de Payback.
+   - A rejeição zera imediatamente o ganho no EBITDA daquela iniciativa no simulador e na geração de caixa.
 
 4. **Simulador de Sensibilidade & Alavancas Operacionais:**
    - As alavancas do simulador são conectadas **1:1 às iniciativas da esteira ativa**.
-   - Sliders de modulação (`0%` a `100%`) permitem estressar cenários operacionais (*"E se capturarmos apenas 40% das devoluções?"*).
-   - Recálculo determinístico instantâneo (< 10ms) do **$\Delta$ EBITDA anual adicionado ao caixa** e do **Payback dinâmico em meses**.
+   - Presets de cenários (`Conservador`, `Moderado`, `Meta Plena`) permitem estressar a eficácia de captura de margem.
+   - Recálculo determinístico instantâneo (< 10ms) do **$\Delta$ EBITDA anual adicionado ao caixa** e da **Geração Mensal no Caixa ($\Delta \text{EBITDA} \div 12$)**.
 
 5. **Auditoria & Exportação do Artefato de Processo:**
    - Painel lateral (slide-over) com parecer formal do CFO, notas da rubrica e queries SQL executadas.
@@ -202,9 +202,9 @@ O arquivo `backend/.env` suporta os seguintes parâmetros:
 
 3. **Simulador de Sensibilidade & Alavancas Operacionais (Base):**
    - As alavancas listadas correspondem 1:1 às iniciativas da esteira.
-   - Arraste os sliders para simular diferentes níveis de eficácia operacional (ex: 20%, 50%, 80%).
-   - Observe a atualização imediata do **Δ EBITDA Adicionado ao Caixa** e do **Payback Estimado**.
-   - Se uma iniciativa for rejeitada na tabela, seu ganho é zerado e o slider correspondente é desativado.
+   - Selecione o cenário de execução (`Conservador`, `Moderado`, `Meta Plena`) para simular a eficácia de captura de margem.
+   - Observe a atualização imediata do **Δ EBITDA Adicionado ao Caixa** e da **Geração Mensal no Caixa**.
+   - Se uma iniciativa for rejeitada na tabela, seu ganho é zerado e o card correspondente exibe status de recusa sem impacto financeiro.
 
 4. **Auditoria & Artefato do CFO (Botão Superior Direito):**
    - Clique em **[ Auditoria & Governança CFO ]** no topo da página.
