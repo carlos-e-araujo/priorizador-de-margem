@@ -1,13 +1,55 @@
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Sliders, TrendingUp, Clock, RotateCcw, Zap, AlertCircle, CheckCircle, Ban, Layers } from 'lucide-react';
+import {
+  Sliders,
+  TrendingUp,
+  Clock,
+  Zap,
+  AlertCircle,
+  CheckCircle,
+  Ban,
+  Layers,
+  ShieldCheck,
+  Gauge,
+  Target,
+  type LucideIcon,
+} from 'lucide-react';
 import { api } from '../services/api';
 import type { SimulatorRunResponse } from '../types';
-import { ScenarioSlider } from './ScenarioSlider';
+import { ScenarioSlider, type ScenarioMode } from './ScenarioSlider';
+
+export const SCENARIO_PRESETS: Record<
+  ScenarioMode,
+  { label: string; factor: number; icon: LucideIcon; description: string; badgeClass: string }
+> = {
+  conservative: {
+    label: 'Conservador',
+    factor: 0.6,
+    icon: ShieldCheck,
+    description: 'Captura estressada (60%) prevendo atritos e atrasos operacionais',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+  },
+  moderate: {
+    label: 'Moderado',
+    factor: 0.8,
+    icon: Gauge,
+    description: 'Captura ponderada (80%) com execução equilibrada',
+    badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+  },
+  full: {
+    label: 'Meta Plena',
+    factor: 1.0,
+    icon: Target,
+    description: 'Captura integral (100%) validada pelos agentes analíticos na Esteira',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  },
+};
 
 export const DynamicSliderPanel: React.FC = () => {
-  const [, startTransition] = useTransition();
   const queryClient = useQueryClient();
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioMode>('full');
+  const [simulationResult, setSimulationResult] = useState<SimulatorRunResponse | null>(null);
+  const [togglingInitiativeId, setTogglingInitiativeId] = useState<number | null>(null);
 
   // Buscar alavancas descobertas pelo motor (vinculadas 1:1 às iniciativas da esteira)
   const {
@@ -20,12 +62,7 @@ export const DynamicSliderPanel: React.FC = () => {
     staleTime: 1000 * 30, // 30s para sincronização dinâmica com a esteira
   });
 
-  // Estado dos valores de ajuste { lever_id: target_pct }
-  const [adjustments, setAdjustments] = useState<Record<string, number>>({});
-  const [simulationResult, setSimulationResult] = useState<SimulatorRunResponse | null>(null);
-  const [togglingInitiativeId, setTogglingInitiativeId] = useState<number | null>(null);
-
-  // Mutação para alternar aprovação/recusa da alavanca/iniciativa com switch
+  // Mutação para alternar aprovação/recusa da alavanca/iniciativa com switch Go / No-Go
   const toggleApprovalMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) =>
       api.updateInitiativeStatus(id, status),
@@ -39,24 +76,7 @@ export const DynamicSliderPanel: React.FC = () => {
     },
   });
 
-  // Inicializar e sincronizar adjustments preservando valores já manipulados
-  useEffect(() => {
-    if (leversData?.levers && leversData.levers.length > 0) {
-      setAdjustments((prev) => {
-        const next: Record<string, number> = { ...prev };
-        leversData.levers.forEach((l) => {
-          if (l.approval_status === 'REJECTED') {
-            next[l.id] = 0.0;
-          } else if (next[l.id] === undefined || next[l.id] === 0) {
-            next[l.id] = l.current_value_pct > 0 ? l.current_value_pct : 1.0;
-          }
-        });
-        return next;
-      });
-    }
-  }, [leversData]);
-
-  // Mutação para simulação determinística
+  // Mutação para simulação determinística no backend
   const simulateMutation = useMutation({
     mutationFn: (adj: Record<string, number>) => api.runSimulation({ adjustments: adj }),
     onSuccess: (data) => {
@@ -64,39 +84,19 @@ export const DynamicSliderPanel: React.FC = () => {
     },
   });
 
-  // Disparar simulação com debounce suave
+  // Recalcular simulação sempre que o cenário selecionado ou a lista de alavancas mudar
   useEffect(() => {
-    if (Object.keys(adjustments).length === 0) return;
+    if (!leversData?.levers || leversData.levers.length === 0) return;
 
-    const timer = setTimeout(() => {
-      simulateMutation.mutate(adjustments);
-    }, 60);
+    const factor = SCENARIO_PRESETS[selectedScenario].factor;
+    const adjustments: Record<string, number> = {};
 
-    return () => clearTimeout(timer);
-  }, [adjustments]);
-
-  const handleSliderChange = useCallback((leverId: string, val: number) => {
-    startTransition(() => {
-      setAdjustments((prev) => ({
-        ...prev,
-        [leverId]: val,
-      }));
+    leversData.levers.forEach((lever) => {
+      adjustments[lever.id] = lever.approval_status === 'REJECTED' ? 0.0 : factor;
     });
-  }, []);
 
-  const handleReset = () => {
-    if (!leversData?.levers) return;
-    const resetValues: Record<string, number> = {};
-    leversData.levers.forEach((l) => {
-      resetValues[l.id] =
-        l.approval_status === 'REJECTED'
-          ? 0.0
-          : l.current_value_pct > 0
-          ? l.current_value_pct
-          : 1.0;
-    });
-    setAdjustments(resetValues);
-  };
+    simulateMutation.mutate(adjustments);
+  }, [selectedScenario, leversData]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
@@ -105,61 +105,39 @@ export const DynamicSliderPanel: React.FC = () => {
   const levers = leversData?.levers || [];
   const rejectedCount = levers.filter((l) => l.approval_status === 'REJECTED').length;
   const approvedCount = levers.length - rejectedCount;
+  const activePreset = SCENARIO_PRESETS[selectedScenario];
+  const ActiveIcon = activePreset.icon;
 
   return (
     <div className="space-y-4">
-      {/* Header do Painel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600">
-            <Sliders className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 tracking-tight">
-              Simulador de Sensibilidade & Alavancas Operacionais
-            </h2>
-            <p className="text-xs text-slate-500">
-              Conexão 1:1 com as iniciativas da esteira · Recálculo determinístico em tempo real
-            </p>
-          </div>
+      {/* 1. Header da Seção */}
+      <div className="flex items-center gap-2.5">
+        <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600">
+          <Sliders className="w-4 h-4" />
         </div>
-
-        <div className="flex items-center gap-2">
-          {/* Badges de Linhagem com a Esteira */}
-          {levers.length > 0 && (
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700 shadow-xs">
-              <Layers className="w-3 h-3 text-slate-400" />
-              <span className="text-slate-500 font-medium">{levers.length} Alavancas:</span>
-              <span className="text-emerald-700 font-semibold flex items-center gap-0.5">
-                <CheckCircle className="w-2.5 h-2.5 text-emerald-600" /> {approvedCount} Aprovadas
-              </span>
-              {rejectedCount > 0 && (
-                <span className="text-rose-700 font-semibold flex items-center gap-0.5">
-                  <Ban className="w-2.5 h-2.5 text-rose-600" /> {rejectedCount} Recusadas
-                </span>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={handleReset}
-            disabled={isLoadingLevers}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 text-xs transition disabled:opacity-50 shadow-xs"
-            title="Restaurar alavancas para os valores padrão"
-          >
-            <RotateCcw className="w-3 h-3" />
-            Resetar
-          </button>
+        <div>
+          <h2 className="text-base font-semibold text-slate-900 tracking-tight">
+            Simulador de Sensibilidade & Alavancas Operacionais
+          </h2>
+          <p className="text-xs text-slate-500">
+            Projeção determinística de impacto no EBITDA e Payback conforme cenários de execução
+          </p>
         </div>
       </div>
 
-      {/* Card de Projeção Executiva (Delta EBITDA & Payback) */}
+      {/* 2. Card de Projeção Executiva (Delta EBITDA & Payback) */}
       <div className="p-5 rounded-xl bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 border border-emerald-200 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-emerald-100 pb-3">
+        <div className="flex flex-wrap items-center justify-between border-b border-emerald-100 pb-3 gap-2">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-emerald-600 animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
               Projeção Consolidada de Impacto
+            </span>
+            <span
+              className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${activePreset.badgeClass}`}
+            >
+              <ActiveIcon className="w-3.5 h-3.5" />
+              <span>{activePreset.label} ({Math.round(activePreset.factor * 100)}% de captura)</span>
             </span>
           </div>
           <span className="text-[11px] text-slate-500 font-mono">
@@ -180,7 +158,7 @@ export const DynamicSliderPanel: React.FC = () => {
                 : '...'}
             </div>
             <p className="text-[11px] text-slate-500">
-              Ganho anualizado efetivo (iniciativas rejeitadas são zeradas)
+              Ganho anualizado no cenário {activePreset.label} (iniciativas rejeitadas são zeradas)
             </p>
           </div>
 
@@ -202,11 +180,60 @@ export const DynamicSliderPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid Dinâmico de Sliders */}
+      {/* 3. Barra de Controle Alinhada Imediatamente Acima dos Cards/Tabela */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        {/* Seletor de Cenários Macro com Ícones Lucide */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-700 hidden sm:inline">
+            Cenário de Execução:
+          </span>
+          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 shadow-2xs">
+            {(['conservative', 'moderate', 'full'] as ScenarioMode[]).map((mode) => {
+              const cfg = SCENARIO_PRESETS[mode];
+              const IconComponent = cfg.icon;
+              const isActive = selectedScenario === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setSelectedScenario(mode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+                    isActive
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title={cfg.description}
+                >
+                  <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-600' : 'text-slate-500'}`} />
+                  <span>{cfg.label}</span>
+                  <span className="text-[10px] font-mono opacity-70">({Math.round(cfg.factor * 100)}%)</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Badges de Linhagem com a Esteira */}
+        {levers.length > 0 && (
+          <div className="flex items-center gap-1.5 text-[11px] bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-slate-700 shadow-xs">
+            <Layers className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-500 font-medium">{levers.length} Alavancas:</span>
+            <span className="text-emerald-700 font-semibold flex items-center gap-0.5">
+              <CheckCircle className="w-2.5 h-2.5 text-emerald-600" /> {approvedCount} Aprovadas
+            </span>
+            {rejectedCount > 0 && (
+              <span className="text-rose-700 font-semibold flex items-center gap-0.5">
+                <Ban className="w-2.5 h-2.5 text-rose-600" /> {rejectedCount} Recusadas
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Grid de Cards de Alavanca */}
       {isLoadingLevers ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-white border border-slate-200 animate-pulse h-32 shadow-xs" />
+            <div key={idx} className="p-5 rounded-2xl bg-white border border-slate-200 animate-pulse h-44 shadow-xs" />
           ))}
         </div>
       ) : isErrorLevers ? (
@@ -220,8 +247,8 @@ export const DynamicSliderPanel: React.FC = () => {
             <ScenarioSlider
               key={lever.id}
               lever={lever}
-              value={adjustments[lever.id] ?? (lever.approval_status === 'REJECTED' ? 0 : lever.current_value_pct)}
-              onChange={(val) => handleSliderChange(lever.id, val)}
+              scenarioMode={selectedScenario}
+              scenarioFactor={SCENARIO_PRESETS[selectedScenario].factor}
               impactBrl={simulationResult?.impact_by_lever?.[lever.id]}
               isToggling={togglingInitiativeId === lever.initiative_id}
               onToggleApproval={(newStatus) => {
