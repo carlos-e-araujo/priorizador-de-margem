@@ -14,7 +14,6 @@ from backend.schemas.audit import (
     SqlEvidence,
 )
 from backend.services.agent_tools import (
-    query_marketing_efficiency_summary,
     query_negative_margin_summary,
     query_returns_by_category,
     query_stockout_risks,
@@ -49,11 +48,6 @@ def _collect_sql_evidences() -> list[SqlEvidence]:
     except Exception:
         data_stock = []
 
-    try:
-        data_mkt = json.loads(query_marketing_efficiency_summary.invoke({}))
-    except Exception:
-        data_mkt = {}
-
     return [
         SqlEvidence(
             tool_name="query_negative_margin_summary",
@@ -78,12 +72,6 @@ def _collect_sql_evidences() -> list[SqlEvidence]:
             target_table="estoque",
             query_description="SKUs e categorias com maior vulnerabilidade de ruptura (em_risco_ruptura = True) e capital imobilizado",
             result_data=data_stock,
-        ),
-        SqlEvidence(
-            tool_name="query_marketing_efficiency_summary",
-            target_table="marketing",
-            query_description="Auditoria de campanhas com ROAS deficitário (< 1.0), queima de verba publicitária e dispersão de eficiência por canal",
-            result_data=data_mkt,
         ),
     ]
 
@@ -319,7 +307,7 @@ def export_audit_markdown_endpoint(
         "",
         "## 4. Matriz de Priorização Multicritério das Iniciativas",
         "",
-        "As iniciativas identificadas pelos especialistas de negócio (Comercial, Operações, CX e Marketing) foram submetidas à fórmula matemática de ranqueamento:",
+        "As iniciativas identificadas pelos especialistas de negócio (Comercial, Operações, CX e Estoque) foram submetidas à fórmula matemática de ranqueamento:",
         "",
         r"$$\text{Score} = \frac{\text{Impacto Estimado (R\$)}}{\text{Esforço (1-3)} \times \text{Risco (1-3)}} \times \text{Fator de Horizonte (30d=1.30, 60d=1.10, 90d=1.00)}$$",
         "",

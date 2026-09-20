@@ -11,7 +11,6 @@ from backend.config import get_llm
 from backend.database import SessionLocal
 from backend.models.engine import Initiative, PrioritizationRun
 from backend.services.agent_tools import (
-    query_marketing_efficiency_summary,
     query_negative_margin_summary,
     query_returns_by_category,
     query_stockout_risks,
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 # --- PROMPTS DE SISTEMA TOTALMENTE AGNOSTICOS E DINÂMICOS ---
 
 SYSTEM_ORCHESTRATOR = """Você é o Orquestrador do Diagnóstico Estratégico da Vértice Retail.
-Sua missão é coordenar quatro especialistas: Comercial, Operações, Customer Experience e Marketing/Mídia Paga.
+Sua missão é coordenar três especialistas: Comercial, Operações e Customer Experience (CX).
 Oriente-os a levantar as maiores evidências concretas das ferramentas analíticas, identificando onde a margem está sendo consumida e quais oportunidades prioritárias devem ser quantificadas.
 """
 
@@ -57,17 +56,8 @@ REGRAS:
 - Responda exclusivamente com parecer técnico analítico, sem saudações coloquiais, sem diálogos com o usuário e sem perguntas ao final.
 """
 
-SYSTEM_MARKETING = """Você é o Especialista de Marketing, Aquisição e Mídia Paga da Vértice Retail.
-Suas ferramentas analisam a eficiência de investimento em campanhas, dispersão de ROAS por canal, CAC e queima de verba em campanhas deficitárias (ROAS < 1.0).
-REGRAS:
-- Baseie suas afirmações estritamente nos dados de marketing retornados pelas tools.
-- Aponte com precisão o volume de campanhas deficitárias, o valor em reais da queima de caixa e a disparidade entre canais de alta tração versus canais de retorno subótimo.
-- Proponha ações de corte imediato de verba deficitária e realocação estratégica para canais com maior ROAS comprovado.
-- Responda exclusivamente com parecer técnico analítico, sem saudações coloquiais, sem diálogos com o usuário e sem perguntas ao final.
-"""
-
 SYSTEM_CONSOLIDATOR = """Você é o Consolidador Executivo do Módulo C da Vértice Retail.
-Analise criticamente os dados brutos e os pareceres dos especialistas (Comercial, Operações, CX e Marketing).
+Analise criticamente os dados brutos e os pareceres dos especialistas (Comercial, Operações e CX).
 Sua missão é gerar de 4 a 6 iniciativas estratégicas genuínas, criativas e fundamentadas nos dados observados.
 IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido, sem nenhum texto livre antes ou depois:
 ```json
@@ -76,7 +66,7 @@ IMPORTANTE: Sua resposta DEVE ser ESTRITAMENTE um bloco de código JSON válido,
     "initiatives": [
         {
             "title": "Nome objetivo e criativo da ação condizente com a causa-raiz",
-            "pilar": "CX | Comercial | Operações | Estoque | Marketing",
+            "pilar": "CX | Comercial | Operações | Estoque",
             "fact_observed": "Fato comprovado nos dados e ferramentas...",
             "hypothesis": "Diagnóstico aprofundado da causa-raiz...",
             "recommendation": "Plano de intervenção tático detalhado...",
@@ -118,7 +108,6 @@ class AgentState(TypedDict, total=False):
     commercial_report: str
     operations_report: str
     cx_report: str
-    marketing_report: str
     revision_count: int
     revision_instructions: str
     critic_approved: bool
@@ -152,16 +141,14 @@ def calculate_deterministic_initiative_impact(
     support_data: Dict[str, Any],
     returns_data: Dict[str, Any],
     stockout_data: Dict[str, Any],
-    marketing_data: Optional[Dict[str, Any]] = None,
 ) -> float:
     """Calcula deterministicamente o impacto financeiro nominal anual da iniciativa a partir das tabelas SQL.
 
     Remove qualquer flutuação estocástica do LLM e ancora os números nas métricas reais auditadas:
     - Estoque: 15% do capital imobilizado da categoria crítica (ex: R$ 340.950,99 em Beleza)
-    - Comercial: 100% do dreno de margem negativa e frete deficitário (R$ 29.778,22) ou do canal específico
+    - Comercial: Governança de cupons/descontos (>20% em não-VIPs) e erradicação de margem negativa
     - CX: 60% do custo operacional da queixa líder de atendimento (R$ 57.955,20 para Defeito) ou do gargalo mapeado
     - Operações: Mitigação de frete reverso perdido (60% do motivo líder ou 40% do frete total)
-    - Marketing: 100% do prejuízo direto de campanhas deficitárias (ROAS < 1.0) ou otimização de verba do canal
     """
     pilar = str(item.get("pilar", "Operações")).strip()
     title = str(item.get("title", "")).lower()
@@ -253,19 +240,6 @@ def calculate_deterministic_initiative_impact(
         res_ops = round(max(frete_top * 0.60, total_reverse_freight * 0.40), 2)
         return res_ops if res_ops > 0 else 20402.46
 
-    elif pilar == "Marketing":
-        mkt = marketing_data or {}
-        mkt_def = mkt.get("campanhas_deficitarias", {})
-        prejuizo_mkt = float(mkt_def.get("prejuizo_direto_brl", 0.0))
-        inv_mkt = float(mkt_def.get("investimento_queimado_brl", 0.0))
-
-        # O impacto financeiro legítimo é a erradicação do prejuízo direto apurado nas campanhas com ROAS < 1.0 (R$ 226.381,69)
-        if prejuizo_mkt > 0:
-            return round(prejuizo_mkt, 2)
-        if inv_mkt > 0:
-            return round(inv_mkt * 0.25, 2)
-        return 50000.0
-
     return 25000.0
 
 
@@ -293,11 +267,6 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
         stockout_data = json.loads(query_stockout_risks.invoke({}))
     except Exception:
         stockout_data = {}
-
-    try:
-        marketing_data = json.loads(query_marketing_efficiency_summary.invoke({}))
-    except Exception:
-        marketing_data = {}
 
     initiatives: List[Dict[str, Any]] = []
 
@@ -437,46 +406,6 @@ def generate_deterministic_initiatives() -> List[Dict[str, Any]]:
         "kpi_origin_id": "vulnerabilidade_estoque",
     })
 
-    # 5. Análise Dinâmica de Eficiência de Mídia e Marketing
-    mkt_def = marketing_data.get("campanhas_deficitarias", {})
-    qtd_mkt_def = int(mkt_def.get("qtd", 0))
-    inv_mkt_def = float(mkt_def.get("investimento_queimado_brl", 0.0))
-    prej_mkt_def = float(mkt_def.get("prejuizo_direto_brl", 0.0))
-    pior_canal_obj = marketing_data.get("canal_menor_retorno") or {}
-    melhor_canal_obj = marketing_data.get("canal_maior_retorno") or {}
-    pior_canal_nome = pior_canal_obj.get("canal", "Mídia Paga Geral")
-    pior_canal_roas = float(pior_canal_obj.get("roas_real", 1.0))
-    melhor_canal_nome = melhor_canal_obj.get("canal", "Canais de Alta Tração")
-    melhor_canal_roas = float(melhor_canal_obj.get("roas_real", 4.0))
-
-    impacto_marketing = round(prej_mkt_def if prej_mkt_def > 0 else (inv_mkt_def * 0.30), 2)
-    if impacto_marketing <= 0:
-        impacto_marketing = round(float(pior_canal_obj.get("investimento_brl", 0.0)) * 0.10, 2) or 50000.0
-
-    title_mkt = f"Otimização de ROAS e Realocação de Verba de Mídia ({pior_canal_nome} ➔ {melhor_canal_nome})"
-    hypo_mkt = (
-        f"Apuradas {qtd_mkt_def} campanhas operando com ROAS inferior a 1,0 drenando R$ {prej_mkt_def:,.2f} de caixa direto, "
-        f"enquanto o canal {pior_canal_nome} apresenta ROAS modesto ({pior_canal_roas:.2f}x) frente a canais de alto retorno como {melhor_canal_nome} ({melhor_canal_roas:.2f}x)."
-    )
-    recom_mkt = (
-        f"Pausar imediatamente as campanhas deficitárias, instituir regra de desarme automático de anúncios com ROAS móvel de 7 dias < 1,5x "
-        f"e remanejar 25% da verba de {pior_canal_nome} para reforçar a tração comprovada em {melhor_canal_nome}."
-    )
-
-    initiatives.append({
-        "title": title_mkt,
-        "pilar": "Marketing",
-        "fact_observed": f"{qtd_mkt_def} campanhas operam com retorno negativo (R$ {inv_mkt_def:,.2f} investidos para R$ {mkt_def.get('receita_gerada_brl', 0):,.2f} faturados, gerando R$ {prej_mkt_def:,.2f} de prejuízo líquido em mídia). Canal {pior_canal_nome} tem menor eficiência ({pior_canal_roas:.2f}x ROAS).".replace(",", "."),
-        "hypothesis": hypo_mkt,
-        "recommendation": recom_mkt,
-        "estimated_impact_brl": impacto_marketing,
-        "effort_level": 1,
-        "risk_level": 2,
-        "horizon_days": 30,
-        "requires_human_approval": True,
-        "kpi_origin_id": "dreno_midia_marketing",
-    })
-
     for init in initiatives:
         init["priority_score"] = calculate_priority_score(
             init["estimated_impact_brl"],
@@ -598,36 +527,6 @@ def cx_specialist_node(state: AgentState) -> Dict[str, Any]:
     return {"cx_report": str(report)}
 
 
-def marketing_specialist_node(state: AgentState) -> Dict[str, Any]:
-    """Especialista de Marketing executa tool de eficiência de mídia e redige parecer técnico."""
-    mkt_raw = query_marketing_efficiency_summary.invoke({})
-    try:
-        llm = get_llm(temperature=0.1)
-        res = llm.invoke(
-            [
-                SystemMessage(content=SYSTEM_MARKETING),
-                HumanMessage(
-                    content=f"Dados de eficiência de marketing e mídia paga:\n{mkt_raw}\n\n"
-                    "Apresente seu parecer exclusivamente como relatório técnico estruturado em: Fatos Quantitativos, Diagnóstico da Causa-Raiz e Recomendações de corte de desperdício e realocação de verba. Não inclua saudações, diálogos informais ou perguntas ao usuário."
-                ),
-            ]
-        )
-        report = res.content
-    except Exception as exc:
-        logger.warning(f"Marketing LLM indisponível, gerando parecer determinístico: {exc}")
-        data = json.loads(mkt_raw)
-        mkt_def = data.get("campanhas_deficitarias", {})
-        pior_c = data.get("canal_menor_retorno") or {}
-        melhor_c = data.get("canal_maior_retorno") or {}
-        report = (
-            f"Especialista de Marketing: Detectadas {mkt_def.get('qtd')} campanhas deficitárias (ROAS < 1.0) "
-            f"gerando prejuízo direto de R$ {mkt_def.get('prejuizo_direto_brl')}. Canal {pior_c.get('canal')} opera a {pior_c.get('roas_real')}x ROAS "
-            f"enquanto {melhor_c.get('canal')} atinge {melhor_c.get('roas_real')}x ROAS."
-        )
-
-    return {"marketing_report": str(report)}
-
-
 def consolidator_node(state: AgentState) -> Dict[str, Any]:
     """Consolidador une os relatórios dos especialistas e dados reais, gerando iniciativas criativas com o LLM."""
     revision_inst = state.get("revision_instructions", "")
@@ -657,12 +556,6 @@ def consolidator_node(state: AgentState) -> Dict[str, Any]:
     except Exception:
         raw_est = "{}"
         data_est = {}
-    try:
-        raw_mkt = query_marketing_efficiency_summary.invoke({})
-        data_mkt = json.loads(raw_mkt)
-    except Exception:
-        raw_mkt = "{}"
-        data_mkt = {}
 
     prompt_content = f"""Você é o Agente Consolidador C-Level do Sistema Vértice Retail.
 Analise com profundidade analítica os dados transacionais em tempo real e os pareceres dos especialistas:
@@ -680,9 +573,6 @@ Analise com profundidade analítica os dados transacionais em tempo real e os pa
 4. ESTOQUE E RUPTURA:
 {raw_est}
 
-5. MARKETING E EFICIÊNCIA DE MÍDIA:
-{raw_mkt}
-
 ### RELATÓRIOS TÉCNICOS DOS ESPECIALISTAS:
 - Parecer Comercial:
 {state.get('commercial_report', '')}
@@ -692,9 +582,6 @@ Analise com profundidade analítica os dados transacionais em tempo real e os pa
 
 - Parecer de CX:
 {state.get('cx_report', '')}
-
-- Parecer de Marketing:
-{state.get('marketing_report', '')}
 """
     if revision_inst:
         prompt_content += f"\n### DIRETRIZES DE REVISÃO DO VALIDADOR FINANCEIRO:\n{revision_inst}\n"
@@ -720,7 +607,7 @@ Estrutura:
   "initiatives": [
     {
       "title": "...",
-      "pilar": "CX | Comercial | Operações | Estoque | Marketing",
+      "pilar": "CX | Comercial | Operações | Estoque",
       "fact_observed": "...",
       "hypothesis": "...",
       "recommendation": "...",
@@ -791,7 +678,7 @@ Estrutura:
             continue
         title = str(item.get("title", "Iniciativa Estratégica")).strip()
         pilar = str(item.get("pilar", "Operações")).strip()
-        if pilar not in ("Comercial", "Operações", "CX", "Estoque", "Marketing"):
+        if pilar not in ("Comercial", "Operações", "CX", "Estoque"):
             pilar = "Operações"
 
         fact_observed = str(item.get("fact_observed", "Evidência apurada nas bases transacionais.")).strip()
@@ -805,7 +692,6 @@ Estrutura:
             support_data=data_cx,
             returns_data=data_ops,
             stockout_data=data_est,
-            marketing_data=data_mkt,
         )
 
         try:
@@ -833,7 +719,6 @@ Estrutura:
             "Comercial": "dreno_comercial_mc_negativa",
             "Operações": "gargalo_devolucoes",
             "Estoque": "vulnerabilidade_estoque",
-            "Marketing": "dreno_midia_marketing",
         }
         kpi_origin = item.get("kpi_origin_id") or pilar_to_kpi.get(pilar, "gargalo_operacional_geral")
 
@@ -981,7 +866,6 @@ def build_agent_graph():
     builder.add_node("commercial", commercial_specialist_node)
     builder.add_node("operations", operations_specialist_node)
     builder.add_node("cx", cx_specialist_node)
-    builder.add_node("marketing", marketing_specialist_node)
     builder.add_node("consolidator", consolidator_node)
     builder.add_node("critic_cfo", critic_cfo_node)
     builder.add_node("save_db", save_to_db_node)
@@ -990,8 +874,7 @@ def build_agent_graph():
     builder.add_edge("orchestrator", "commercial")
     builder.add_edge("commercial", "operations")
     builder.add_edge("operations", "cx")
-    builder.add_edge("cx", "marketing")
-    builder.add_edge("marketing", "consolidator")
+    builder.add_edge("cx", "consolidator")
     builder.add_edge("consolidator", "critic_cfo")
 
     builder.add_conditional_edges(

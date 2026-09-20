@@ -1,9 +1,8 @@
 from typing import Optional
 from sqlalchemy import case, desc, func, select
 from sqlalchemy.orm import Session
-
 from backend.database import SessionLocal
-from backend.models.dataroom import Atendimento, Estoque, Marketing, Venda
+from backend.models.dataroom import Atendimento, Estoque, Venda
 from backend.schemas.kpi import (
     KpiBreakdownResponse,
     KpiBreakdownRow,
@@ -171,37 +170,6 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
         if res_v.min_data and res_v.max_data:
             period_str = f"{res_v.min_data[:7]} a {res_v.max_data[:7]}"
 
-        # 6. Descoberta Dinâmica de Eficiência de Mídia e Marketing
-        stmt_mkt = select(
-            func.count(Marketing.campanha_id).label("total_campanhas"),
-            func.sum(case((Marketing.roas < 1.0, 1), else_=0)).label("qtd_deficitarias"),
-            func.sum(case((Marketing.roas < 1.0, Marketing.investimento_reais), else_=0.0)).label("inv_deficitario"),
-            func.sum(case((Marketing.roas < 1.0, Marketing.receita_gerada), else_=0.0)).label("rec_deficitario"),
-            func.sum(Marketing.investimento_reais).label("investimento_total"),
-            func.sum(Marketing.receita_gerada).label("receita_total"),
-        )
-        res_mkt = session.execute(stmt_mkt).one()
-        mkt_qtd_def = int(res_mkt.qtd_deficitarias or 0)
-        mkt_inv_def = float(res_mkt.inv_deficitario or 0.0)
-        mkt_rec_def = float(res_mkt.rec_deficitario or 0.0)
-        mkt_prejuizo_direto = max(0.0, mkt_inv_def - mkt_rec_def)
-        mkt_inv_tot = float(res_mkt.investimento_total or 0.0)
-        mkt_rec_tot = float(res_mkt.receita_total or 0.0)
-        mkt_roas_global = (mkt_rec_tot / mkt_inv_tot) if mkt_inv_tot > 0 else 0.0
-
-        stmt_pior_canal = (
-            select(
-                Marketing.canal,
-                (func.sum(Marketing.receita_gerada) / func.sum(Marketing.investimento_reais)).label("roas_canal"),
-            )
-            .group_by(Marketing.canal)
-            .order_by("roas_canal")
-            .limit(1)
-        )
-        row_pior_canal = session.execute(stmt_pior_canal).first()
-        mkt_pior_canal_nome = row_pior_canal[0] if row_pior_canal else "Geral"
-        mkt_pior_canal_roas = float(row_pior_canal[1] or 0.0) if row_pior_canal else 0.0
-
         # Montagem da Coleção 100% Dinâmica de Cards
         cards: list[KpiCardItem] = [
             # Card 1: Receita Líquida (Macro Comercial)
@@ -275,18 +243,6 @@ def get_kpis_summary(db: Optional[Session] = None) -> KpiSummaryResponse:
                 status="critical" if pct_ruptura > 10 else "warning",
                 trend=f"{format_percent_br(pct_ruptura)} do catálogo ativo",
                 subtitle=f"{format_currency_brl(capital_ruptura_custo)} imobilizado / {format_currency_brl(capital_ruptura_venda)} em vendas sob risco",
-            ),
-            # Card 7: Eficiência de Mídia e Marketing (Dinâmico por Campanhas Deficitárias / Canal)
-            KpiCardItem(
-                id="dreno_midia_marketing",
-                title=f"Mídia: {mkt_pior_canal_nome} & Queima de Verba",
-                category="Marketing",
-                value=round(mkt_prejuizo_direto if mkt_prejuizo_direto > 0 else mkt_inv_def, 2),
-                formatted_value=format_currency_brl(mkt_prejuizo_direto if mkt_prejuizo_direto > 0 else mkt_inv_def),
-                unit="BRL",
-                status="critical" if mkt_qtd_def > 0 else ("warning" if mkt_roas_global < 3.5 else "normal"),
-                trend=f"{format_integer_br(mkt_qtd_def)} campanhas com ROAS < 1.0" if mkt_qtd_def > 0 else f"ROAS global {mkt_roas_global:.2f}x",
-                subtitle=f"{format_currency_brl(mkt_inv_def)} em verba deficitária ({mkt_pior_canal_nome} opera a {mkt_pior_canal_roas:.2f}x ROAS)" if mkt_qtd_def > 0 else f"{mkt_pior_canal_nome} com menor retorno ({mkt_pior_canal_roas:.2f}x ROAS)",
             ),
         ]
 
