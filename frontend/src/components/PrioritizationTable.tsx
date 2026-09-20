@@ -28,11 +28,13 @@ import { api } from '../services/api';
 import type { InitiativeResponse, HorizonDays } from '../types';
 import { InitiativeDetailModal } from './InitiativeDetailModal';
 import { ApprovalSwitch } from './ApprovalSwitch';
+import { useAudit } from '../routes/__root';
 
 const columnHelper = createColumnHelper<InitiativeResponse>();
 
 export const PrioritizationTable: React.FC = () => {
   const queryClient = useQueryClient();
+  const { openAuditDrawer } = useAudit();
   const [selectedHorizon, setSelectedHorizon] = useState<HorizonDays | 'all'>('all');
   const [sorting, setSorting] = useState<SortingState>([{ id: 'priority_score', desc: true }]);
   const [selectedInitiative, setSelectedInitiative] = useState<InitiativeResponse | null>(null);
@@ -322,13 +324,17 @@ export const PrioritizationTable: React.FC = () => {
               <span>EBITDA Potencial: <strong className="text-emerald-700 font-mono text-sm">{formatCurrency(runData.total_ebitda_potential)}</strong></span>
             </div>
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-            <div className="flex items-center gap-1.5 text-slate-700">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <button
+              onClick={() => openAuditDrawer(runData.id)}
+              className="flex items-center gap-1.5 text-slate-700 hover:text-emerald-700 transition group cursor-pointer text-left"
+              title="Clique para abrir auditoria detalhada e parecer do CFO"
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
               <span>Parecer CFO:</span>
-              <span className="font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 group-hover:bg-emerald-100 group-hover:border-emerald-300 transition">
                 {runData.critic_verdict} ({runData.critic_score}/100)
               </span>
-            </div>
+            </button>
           </div>
 
           <div className="text-[11px] text-slate-500">
@@ -337,7 +343,7 @@ export const PrioritizationTable: React.FC = () => {
         </div>
       )}
 
-      {/* Barra de Controle: Abas de Filtro + Botão Disparar Motor */}
+      {/* Barra de Controle: Abas de Filtro + Botões de Ação da Esteira */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         {/* Abas de Horizonte */}
         <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 overflow-x-auto">
@@ -384,24 +390,41 @@ export const PrioritizationTable: React.FC = () => {
           </button>
         </div>
 
-        {/* Botão Superior: Rodar Motor de Priorização */}
-        <button
-          onClick={() => runEngineMutation.mutate()}
-          disabled={isEngineRunning || isFetching}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white transition shadow-sm disabled:opacity-50"
-        >
-          {isEngineRunning ? (
-            <>
-              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Executando Agentes LangGraph...</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Rodar Motor de Priorização</span>
-            </>
-          )}
-        </button>
+        {/* Ações da Esteira: Auditoria e Governança + Rodar Motor */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => openAuditDrawer(runData?.id)}
+            disabled={!runData}
+            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-xs disabled:opacity-50 shrink-0"
+            title="Ver rastreabilidade de dados, memória de cálculo e parecer do CFO"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Auditoria & Governança</span>
+            {runData?.critic_score !== undefined && (
+              <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 leading-none">
+                {runData.critic_score} pts
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => runEngineMutation.mutate()}
+            disabled={isEngineRunning || isFetching}
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 text-xs font-bold text-white transition shadow-sm disabled:opacity-50 shrink-0"
+          >
+            {isEngineRunning ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                <span>Executando Agentes LangGraph...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+                <span>Rodar Motor de Priorização</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Tabela TanStack */}

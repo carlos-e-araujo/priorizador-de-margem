@@ -72,23 +72,6 @@ const RootComponent: React.FC = () => {
                 </p>
               </div>
             </div>
-
-            {/* Ação de Auditoria C-Level */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => openAuditDrawer()}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 text-xs font-semibold text-white transition shadow-sm"
-              >
-                <ShieldCheck className="w-4 h-4 text-white" />
-                <span className="hidden sm:inline">Auditoria & Governança</span>
-                <span className="sm:hidden">Auditoria</span>
-                {latestRun?.critic_score !== undefined && (
-                  <span className="font-mono text-[11px] text-white font-bold bg-emerald-700/80 px-1.5 py-0.5 rounded border border-emerald-400/40">
-                    {latestRun.critic_score} pts
-                  </span>
-                )}
-              </button>
-            </div>
           </div>
         </header>
 
